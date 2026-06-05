@@ -1,4 +1,6 @@
 import sitemapRestaurants from "@/app/sitemap-restaurants";
+
+export const runtime = "edge";
 import { sitemapToXml } from "@/lib/sitemap-xml";
 
 export const revalidate = 86400;

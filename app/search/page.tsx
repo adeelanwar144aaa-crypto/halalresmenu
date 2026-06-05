@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const runtime = "edge";
 import Link from "next/link";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
 import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";

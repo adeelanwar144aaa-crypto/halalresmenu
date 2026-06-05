@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const runtime = "edge";
 import { HeroSection } from "@/components/restaurant/HeroSection";
 import { NearbyMosques } from "@/components/restaurant/NearbyMosques";
 import {

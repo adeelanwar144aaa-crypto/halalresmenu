@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const runtime = "edge";
 import {
   hasTakeaway,
   TakeawayAvailableBadge,

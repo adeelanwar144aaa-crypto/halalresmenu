@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { RestaurantNavigation } from "@/components/layout/RestaurantNavigation";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import { notFound } from "next/navigation";

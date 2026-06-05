@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const runtime = "edge";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import "./globals.css";

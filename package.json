@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "deploy": "npm run pages:build",
     "start": "next start",
     "lint": "next lint",
     "seed": "npx tsx scripts/seed.ts",
@@ -42,6 +44,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
@@ -51,6 +54,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vercel": "^47.0.4"
   }
 }
