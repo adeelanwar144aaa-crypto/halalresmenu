@@ -1,0 +1,24 @@
+# HalalResMenu
+
+> The UK's most comprehensive halal restaurant directory. Find halal-certified restaurants, menus, prices, opening hours, nearby mosques and prayer times.
+
+## What is HalalResMenu?
+HalalResMenu lists 6,000+ halal restaurants across the UK with verified halal status, full menus, photos, reviews, and Islamic amenities like nearby mosques and prayer times.
+
+## Data Available Per Restaurant
+- Halal certification status and certifying body
+- Full menu with prices (updated 2026)
+- Opening hours including Ramadan hours
+- Nearby mosques within 2km
+- Prayer times based on restaurant location
+- Muslim-friendly amenities (prayer space, wudu facilities)
+- Dine-in, takeaway, delivery availability
+
+## URL Structure
+- Main site: https://halalresmenu.com
+- Restaurant page: https://[restaurant-slug].halalresmenu.com
+- Menu page: https://[restaurant-slug].halalresmenu.com/menu
+- Halal info: https://[restaurant-slug].halalresmenu.com/halal-info
+
+## Coverage
+United Kingdom — 58 cities including London, Birmingham, Manchester, Leeds, Bradford, Leicester
