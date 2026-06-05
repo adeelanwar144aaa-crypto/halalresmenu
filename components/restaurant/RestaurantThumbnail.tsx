@@ -37,7 +37,7 @@ export function RestaurantThumbnail({
       ) : (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={photoUrl}
+          src={photoUrl ?? ""}
           alt={name}
           width={width}
           height={height}
