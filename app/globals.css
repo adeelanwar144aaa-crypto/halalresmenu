@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --halal-primary: #1a7a4a;
+}
+
+html {
+  scroll-padding-top: 5.5rem;
+}
+
+@media (min-width: 1024px) {
+  html {
+    scroll-padding-top: 4.5rem;
+  }
+}
+
+body {
+  @apply min-h-screen bg-zinc-50 text-zinc-900 antialiased;
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(26 122 74 / 0.35) transparent;
+  }
+}

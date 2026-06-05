@@ -1,0 +1,13 @@
+{
+  "completedAt": "2026-05-23T04:30:45.217Z",
+  "uniqueCities": 58,
+  "totalRestaurantsWithMosquesSaved": 5655,
+  "mosques": {
+    "apiCalls": 58,
+    "citiesSaved": 58,
+    "citiesSkipped": 0,
+    "citiesFailed": 0,
+    "restaurantsUpdated": 5655,
+    "restaurantsSkipped": 0
+  }
+}
