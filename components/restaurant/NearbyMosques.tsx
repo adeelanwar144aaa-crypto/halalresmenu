@@ -1,10 +1,24 @@
 import Link from "next/link";
+import { SectionErrorFallback } from "@/components/restaurant/SectionErrorFallback";
 import { getMosquesForRestaurant, googleMapsDirectionsUrl } from "@/lib/mosques";
 import { fetchPrayerTimesForCoordinates } from "@/lib/prayer-times";
 import type { Restaurant } from "@/types/restaurant";
 import { SectionHeading } from "@/components/restaurant/SectionHeading";
 
 export async function NearbyMosques({
+  restaurant,
+}: {
+  restaurant: Restaurant;
+}) {
+  try {
+    return await NearbyMosquesContent({ restaurant });
+  } catch (err) {
+    console.error("NearbyMosques render failed:", err);
+    return <SectionErrorFallback title="Nearby mosques" />;
+  }
+}
+
+async function NearbyMosquesContent({
   restaurant,
 }: {
   restaurant: Restaurant;
@@ -62,7 +76,9 @@ export async function NearbyMosques({
           ) : (
             mosques.map((m, idx) => {
               const t = timings[idx];
-              const distKm = (m.distanceMeters / 1000).toFixed(2);
+              const distKm = (
+                (m.distanceMeters ?? 0) / 1000
+              ).toFixed(2);
               const dir = googleMapsDirectionsUrl(
                 m.latitude,
                 m.longitude,
@@ -75,7 +91,9 @@ export async function NearbyMosques({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-zinc-900">{m.name}</h3>
+                      <h3 className="font-semibold text-zinc-900">
+                        {m.name ?? "Mosque"}
+                      </h3>
                       {m.vicinity && (
                         <p className="mt-1 text-sm text-zinc-600">{m.vicinity}</p>
                       )}
@@ -90,7 +108,10 @@ export async function NearbyMosques({
                     </Link>
                   </div>
                   <p className="mt-3 text-xs font-medium text-zinc-500">
-                    {distKm} km · ~{m.walkingMinutes} min walk
+                    {distKm} km
+                    {m.walkingMinutes != null
+                      ? ` · ~${m.walkingMinutes} min walk`
+                      : ""}
                   </p>
                   {t && (
                     <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-xl bg-halal-50/60 p-3 text-xs text-zinc-800 ring-1 ring-halal-100/80">

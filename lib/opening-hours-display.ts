@@ -1,3 +1,4 @@
+import { parseJsonField } from "@/lib/parse-json-field";
 import type { OpeningDayHours, OpeningHours } from "@/types/restaurant";
 
 const WEEK_KEYS = [
@@ -60,13 +61,25 @@ export type WeekRow = {
   isToday: boolean;
 };
 
+export function normalizeOpeningHours(
+  opening: OpeningHours | Record<string, unknown> | string | null | undefined
+): OpeningHours | null {
+  if (opening == null) return null;
+  if (typeof opening === "string") {
+    return parseJsonField<OpeningHours>(opening);
+  }
+  if (typeof opening === "object") {
+    return opening as OpeningHours;
+  }
+  return null;
+}
+
 export function getWeekOpeningRows(
-  opening: OpeningHours | Record<string, unknown> | null | undefined,
+  opening: OpeningHours | Record<string, unknown> | string | null | undefined,
   now: Date = new Date()
 ): WeekRow[] {
   const todayKey = jsDayToKey(now);
-  const oh =
-    opening && typeof opening === "object" ? (opening as OpeningHours) : null;
+  const oh = normalizeOpeningHours(opening);
   return WEEK_KEYS.map((key) => ({
     key,
     label: WEEK_LABELS[key],
@@ -76,13 +89,20 @@ export function getWeekOpeningRows(
 }
 
 export function getRamadanRows(
-  ramadan: Record<string, unknown> | null | undefined
+  ramadan: Record<string, unknown> | string | null | undefined
 ): WeekRow[] | null {
-  if (!ramadan || typeof ramadan !== "object") return null;
-  const keys = Object.keys(ramadan);
+  const parsed =
+    typeof ramadan === "string"
+      ? parseJsonField<Record<string, unknown>>(ramadan)
+      : ramadan && typeof ramadan === "object"
+        ? ramadan
+        : null;
+  if (!parsed) return null;
+  const ramadanObj = parsed;
+  const keys = Object.keys(ramadanObj);
   if (keys.length === 0) return null;
   return WEEK_KEYS.map((key) => {
-    const raw = ramadan[key];
+    const raw = ramadanObj[key];
     const day =
       raw && typeof raw === "object"
         ? (raw as OpeningDayHours)

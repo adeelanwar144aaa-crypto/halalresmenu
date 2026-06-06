@@ -1,3 +1,4 @@
+import { edgeFetch } from "@/lib/edge-fetch";
 import type { StoredNearbyMosque } from "@/types/restaurant";
 
 export type MosquePlace = {
@@ -145,7 +146,7 @@ export async function fetchNearbyMosques(params: {
   url.searchParams.set("type", "mosque");
   url.searchParams.set("key", key);
 
-  const res = await fetch(url.toString(), { next: { revalidate: 86400 } });
+  const res = await edgeFetch(url.toString());
   if (!res.ok) return [];
   const data = (await res.json()) as NearbySearchResponse;
   if (data.status !== "OK" && data.status !== "ZERO_RESULTS") return [];

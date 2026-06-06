@@ -1,3 +1,4 @@
+import { normalizeOpeningHours } from "@/lib/opening-hours-display";
 import type { OpeningHours } from "@/types/restaurant";
 
 const DAY_ORDER = [
@@ -45,13 +46,14 @@ function minutesFromAladhanStyle(time: string): number | null {
  * and prayer falls within range. Overnight close (e.g. 2:00) treated as next day.
  */
 export function isOpenAtPrayerTime(
-  opening: OpeningHours | Record<string, unknown> | null | undefined,
+  opening: OpeningHours | Record<string, unknown> | string | null | undefined,
   prayerTime: string,
   now: Date = new Date()
 ): boolean | null {
-  if (!opening || typeof opening !== "object") return null;
+  const oh = normalizeOpeningHours(opening);
+  if (!oh) return null;
   const day = dayKeyFromDate(now);
-  const dayHours = (opening as OpeningHours)[day];
+  const dayHours = oh[day];
   if (!dayHours || dayHours.closed) return false;
   const openStr = dayHours.open;
   const closeStr = dayHours.close;
@@ -70,12 +72,13 @@ function nowMinutes(d: Date): number {
 
 /** Whether the venue is open right now based on `opening_hours` for today's weekday. */
 export function isRestaurantOpenNow(
-  opening: OpeningHours | Record<string, unknown> | null | undefined,
+  opening: OpeningHours | Record<string, unknown> | string | null | undefined,
   now: Date = new Date()
 ): boolean | null {
-  if (!opening || typeof opening !== "object") return null;
+  const oh = normalizeOpeningHours(opening);
+  if (!oh) return null;
   const day = dayKeyFromDate(now);
-  const dayHours = (opening as OpeningHours)[day];
+  const dayHours = oh[day];
   if (!dayHours || dayHours.closed) return false;
   const openStr = dayHours.open;
   const closeStr = dayHours.close;

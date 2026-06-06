@@ -1,3 +1,4 @@
+import { edgeFetch } from "@/lib/edge-fetch";
 import type { Restaurant } from "@/types/restaurant";
 
 function fallbackAbout(r: Restaurant): string[] {
@@ -37,7 +38,7 @@ Tone: professional food/travel magazine. Do not invent awards or exact dish name
   };
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await edgeFetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -45,7 +46,6 @@ Tone: professional food/travel magazine. Do not invent awards or exact dish name
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify(payload),
-      next: { revalidate: 86400 },
     });
     if (!res.ok) return fallbackAbout(restaurant);
     const json = (await res.json()) as {

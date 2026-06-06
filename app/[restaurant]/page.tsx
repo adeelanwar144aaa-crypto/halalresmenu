@@ -71,28 +71,33 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
   const row = await fetchRestaurantBySlug(restaurant);
   if (!row) notFound();
 
+  const restaurantName = row.name?.trim() || "Restaurant";
+
   const supabase = getSupabaseServer();
   let photos: RestaurantPhoto[] = [];
   let reviews: Review[] = [];
 
   if (supabase) {
-    const [p, r] = await Promise.all([
-      supabase
-        .from("restaurant_photos")
-        .select("*")
-        .eq("restaurant_id", row.id)
-        .order("is_primary", { ascending: false })
-        .limit(12),
-      supabase
-        .from("reviews")
-        .select("*")
-        .eq("restaurant_id", row.id)
-        .order("date", { ascending: false })
-        .limit(12),
-    ]);
-    const tablePhotos = (p.data ?? []) as RestaurantPhoto[];
-    photos = tablePhotos;
-    reviews = (r.data ?? []) as Review[];
+    try {
+      const [p, r] = await Promise.all([
+        supabase
+          .from("restaurant_photos")
+          .select("*")
+          .eq("restaurant_id", row.id)
+          .order("is_primary", { ascending: false })
+          .limit(12),
+        supabase
+          .from("reviews")
+          .select("*")
+          .eq("restaurant_id", row.id)
+          .order("date", { ascending: false })
+          .limit(12),
+      ]);
+      photos = (p.data ?? []) as RestaurantPhoto[];
+      reviews = (r.data ?? []) as Review[];
+    } catch (err) {
+      console.error("Restaurant overview: photo/review fetch failed:", err);
+    }
   }
 
   const menuData = parseMenuData(row.menu_data);
@@ -109,6 +114,17 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
   const menuSample = getMenuSchemaSample(menuData);
   const galleryUrls = resolveRestaurantGalleryUrls(row.photos, photos);
 
+  const schemaReviews = googleReviews.map((gr, i) => ({
+    id: `google-${i}`,
+    restaurant_id: row.id,
+    source: "google",
+    author_name: gr.author_name ?? null,
+    rating: gr.rating ?? null,
+    content: gr.text ?? null,
+    date: gr.time != null ? String(gr.time) : null,
+    is_verified: null,
+  }));
+
   return (
     <article className="bg-white">
       <OverviewSchema
@@ -116,26 +132,17 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
         url={canonical}
         breadcrumbs={[
           { name: "Home", url: site },
-          { name: row.name, url: canonical },
+          { name: restaurantName, url: canonical },
         ]}
-        reviews={googleReviews.map((gr, i) => ({
-          id: `google-${i}`,
-          restaurant_id: row.id,
-          source: "google",
-          author_name: gr.author_name,
-          rating: gr.rating,
-          content: gr.text,
-          date: gr.time ? String(gr.time) : null,
-          is_verified: null,
-        }))}
+        reviews={schemaReviews}
         menuSample={menuSample}
       />
       <HeroSection
         restaurant={row}
         photoUrls={galleryUrls}
         slug={restaurant}
-        averageRating={average}
-        reviewCount={count}
+        averageRating={average ?? undefined}
+        reviewCount={count ?? 0}
         openStatus={openStatus}
       />
       <AboutArticle restaurant={row} />
@@ -143,12 +150,12 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
         <PhotoGallery
           photoUrls={galleryUrls}
           slug={restaurant}
-          restaurantName={row.name}
+          restaurantName={restaurantName}
         />
       ) : (
         <PhotoGalleryPlaceholder
           slug={restaurant}
-          restaurantName={row.name}
+          restaurantName={restaurantName}
         />
       )}
       <ServiceHighlights restaurant={row} />
@@ -156,10 +163,10 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
       <HalalArticleBlock restaurant={row} />
       <OpeningHoursBlock restaurant={row} />
       <ReviewsArticle
-        restaurantName={row.name}
+        restaurantName={restaurantName}
         reviews={googleReviews}
-        overallRating={average}
-        totalReviewCount={count}
+        overallRating={average ?? null}
+        totalReviewCount={count ?? 0}
       />
       <LocationFindUs restaurant={row} />
       <NearbyMosques restaurant={row} />

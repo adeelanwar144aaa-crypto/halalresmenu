@@ -1,3 +1,5 @@
+import { edgeFetch } from "@/lib/edge-fetch";
+
 const ALADHAN_BASE = "https://api.aladhan.com/v1";
 
 export type DailyPrayerTimings = {
@@ -48,7 +50,7 @@ export async function fetchPrayerTimesForCoordinates(params: {
   if (apiKey) qs.set("key", apiKey);
 
   const url = `${ALADHAN_BASE}/timings/${day}-${month}-${year}?${qs.toString()}`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await edgeFetch(url);
   if (!res.ok) return null;
   const json = (await res.json()) as AladhanTimingsResponse;
   if (!json.data?.timings) return null;
@@ -82,7 +84,7 @@ export async function fetchJummahTime(params: {
   });
   if (apiKey) qs.set("key", apiKey);
   const url = `${ALADHAN_BASE}/timings/${d}-${m}-${y}?${qs.toString()}`;
-  const res = await fetch(url, { next: { revalidate: 86400 } });
+  const res = await edgeFetch(url);
   if (!res.ok) return null;
   const json = (await res.json()) as AladhanTimingsResponse;
   const t = json.data?.timings;

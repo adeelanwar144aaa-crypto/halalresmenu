@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionErrorFallback } from "@/components/restaurant/SectionErrorFallback";
 import { getSupabaseServer } from "@/lib/supabase";
 import { haversineKm } from "@/lib/geo";
 import { restaurantSubdomainUrl } from "@/lib/utils";
@@ -14,6 +15,21 @@ type Neighbor = {
 };
 
 export async function NearbyHalalSEO({
+  restaurant,
+}: {
+  restaurant: Restaurant;
+}) {
+  try {
+    return await NearbyHalalSEOContent({ restaurant });
+  } catch (err) {
+    console.error("NearbyHalalSEO render failed:", err);
+    return (
+      <SectionErrorFallback title="Other halal restaurants nearby" />
+    );
+  }
+}
+
+async function NearbyHalalSEOContent({
   restaurant,
 }: {
   restaurant: Restaurant;
@@ -97,14 +113,16 @@ export async function NearbyHalalSEO({
               this row.
             </li>
           ) : (
-            rows.map((n) => (
+            rows
+              .filter((n) => Boolean(n.slug?.trim()))
+              .map((n) => (
               <li key={n.slug}>
                 <Link
                   href={restaurantSubdomainUrl(n.slug)}
                   className="group flex h-full flex-col rounded-2xl border border-zinc-100 bg-white p-4 shadow-card ring-1 ring-black/[0.03] transition hover:-translate-y-0.5 hover:border-halal-200 hover:shadow-card-hover"
                 >
                   <p className="font-semibold text-zinc-900 group-hover:text-halal-800">
-                    {n.name}
+                    {n.name ?? "Halal restaurant"}
                   </p>
                   <p className="mt-1 text-xs text-zinc-500">
                     {n.cuisine_type ?? "Halal dining"}

@@ -1,8 +1,22 @@
+import { SectionErrorFallback } from "@/components/restaurant/SectionErrorFallback";
 import { fetchJummahTime, fetchPrayerTimesForCoordinates } from "@/lib/prayer-times";
 import { isOpenAtPrayerTime } from "@/lib/opening-hours";
 import type { Restaurant } from "@/types/restaurant";
 
 export async function PrayerTimes({
+  restaurant,
+}: {
+  restaurant: Restaurant;
+}) {
+  try {
+    return await PrayerTimesContent({ restaurant });
+  } catch (err) {
+    console.error("PrayerTimes render failed:", err);
+    return <SectionErrorFallback title="Prayer times" />;
+  }
+}
+
+async function PrayerTimesContent({
   restaurant,
 }: {
   restaurant: Restaurant;
@@ -120,7 +134,7 @@ export async function PrayerTimes({
                         {r.label}
                       </td>
                       <td className="px-4 py-3.5 font-medium text-zinc-800">
-                        {r.time}
+                        {r.time || "—"}
                       </td>
                       <td className="px-4 py-3.5 text-zinc-600">
                         {open === null

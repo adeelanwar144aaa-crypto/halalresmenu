@@ -1,3 +1,4 @@
+import { parseJsonField } from "@/lib/parse-json-field";
 import type { MenuData, MenuDataCategory, MenuDataItem } from "@/types/restaurant";
 
 export type MenuHighlightEntry = MenuDataItem & {
@@ -11,9 +12,10 @@ export function formatMenuPrice(price: number | null | undefined): string | null
 }
 
 export function parseMenuData(raw: unknown): MenuData | null {
-  if (raw == null || typeof raw !== "object") return null;
+  const parsed = parseJsonField<Record<string, unknown>>(raw);
+  if (!parsed) return null;
 
-  const obj = raw as Record<string, unknown>;
+  const obj = parsed;
   const categoriesRaw = Array.isArray(obj.categories) ? obj.categories : [];
   const categories: MenuDataCategory[] = categoriesRaw
     .map((cat) => {

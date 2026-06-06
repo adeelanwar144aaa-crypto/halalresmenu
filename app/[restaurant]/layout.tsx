@@ -17,7 +17,10 @@ export default async function RestaurantLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
-      <RestaurantNavigation slug={restaurant} restaurantName={row.name} />
+      <RestaurantNavigation
+        slug={restaurant}
+        restaurantName={row.name?.trim() || "Restaurant"}
+      />
       {children}
     </div>
   );
