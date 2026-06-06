@@ -310,7 +310,8 @@ export function HeroSection({
 
   return (
     <section
-      className="relative min-h-[600px] overflow-hidden border-b-2 border-halal-300/60"
+      id="overview"
+      className="relative scroll-mt-32 min-h-[600px] overflow-hidden border-b-2 border-halal-300/60 sm:scroll-mt-36"
       style={{
         background: "linear-gradient(180deg, #f0faf4 0%, #e8f5e9 100%)",
       }}

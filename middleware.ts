@@ -74,15 +74,28 @@ export function resolveRestaurantSlug(request: NextRequest): string | null {
   return extractRestaurantSubdomain(host);
 }
 
+function forwardWithPathname(
+  request: NextRequest,
+  pathname: string,
+  init?: { rewrite?: URL }
+): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-hrm-pathname", pathname);
+
+  if (init?.rewrite) {
+    return NextResponse.rewrite(init.rewrite, {
+      request: { headers: requestHeaders },
+    });
+  }
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function middleware(request: NextRequest) {
-  const slug = resolveRestaurantSlug(request);
-
-  // Apex / www / no subdomain → serve the requested page (homepage, search, etc.)
-  if (!slug) return NextResponse.next();
-
   const pathname = request.nextUrl.pathname;
+
   if (pathname.startsWith("/invalid-subdomain")) {
-    return NextResponse.next();
+    return forwardWithPathname(request, pathname);
   }
   if (
     pathname.startsWith("/_next") ||
@@ -90,18 +103,34 @@ export async function middleware(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname.startsWith("/sitemap")
   ) {
-    return NextResponse.next();
+    return forwardWithPathname(request, pathname);
+  }
+
+  const slug = resolveRestaurantSlug(request);
+
+  // Apex / www / no subdomain → serve the requested page (homepage, search, etc.)
+  if (!slug) {
+    return forwardWithPathname(request, pathname);
   }
 
   const exists = await restaurantSlugExistsViaRest(slug);
   if (!exists) {
-    return NextResponse.rewrite(new URL("/invalid-subdomain", request.url));
+    return forwardWithPathname(
+      request,
+      "/invalid-subdomain",
+      { rewrite: new URL("/invalid-subdomain", request.url) }
+    );
   }
 
   const suffix = pathname === "/" ? "" : pathname;
   const url = request.nextUrl.clone();
   url.pathname = `/${slug}${suffix}`;
-  return NextResponse.rewrite(url);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-hrm-restaurant-slug", slug);
+  requestHeaders.set("x-hrm-pathname", url.pathname);
+
+  return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
 }
 
 export const config = {
