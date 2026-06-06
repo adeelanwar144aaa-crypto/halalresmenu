@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseServer } from "@/lib/supabase";
+import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
 
 const PAGE_SIZE = 1000;
 
@@ -33,7 +34,9 @@ async function fetchAllRestaurantSlugs(): Promise<
 
     for (const row of data) {
       const slug = String(row.slug ?? "").trim();
-      if (slug) rows.push({ slug, updated_at: row.updated_at });
+      if (isSubdomainSafeSlug(slug)) {
+        rows.push({ slug, updated_at: row.updated_at });
+      }
     }
 
     if (data.length < PAGE_SIZE) break;
