@@ -1,5 +1,6 @@
 export const runtime = "edge";
 
+import { headers } from "next/headers";
 import { RestaurantNavigation } from "@/components/layout/RestaurantNavigation";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import { notFound } from "next/navigation";
@@ -15,11 +16,15 @@ export default async function RestaurantLayout({
   const row = await fetchRestaurantBySlug(restaurant);
   if (!row) notFound();
 
+  const hdrs = await headers();
+  const onSubdomain = Boolean(hdrs.get("x-hrm-restaurant-slug"));
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
       <RestaurantNavigation
         slug={restaurant}
         restaurantName={row.name?.trim() || "Restaurant"}
+        onSubdomain={onSubdomain}
       />
       {children}
     </div>

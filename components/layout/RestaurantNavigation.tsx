@@ -2,50 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-type NavItem = {
-  href: string;
-  label: string;
-  page: "overview" | "menu" | "halal-info" | "anchor";
-};
-
-function navItems(slug: string): NavItem[] {
-  const base = `/${slug}`;
-  return [
-    { href: `${base}#overview`, label: "Overview", page: "overview" },
-    { href: `${base}/menu`, label: "Menu", page: "menu" },
-    { href: `${base}/halal-info`, label: "Halal Info", page: "halal-info" },
-    { href: `${base}#reviews`, label: "Reviews", page: "anchor" },
-    { href: `${base}#prayer-times`, label: "Prayer Times", page: "anchor" },
-    { href: `${base}#nearby-mosques`, label: "Nearby Mosques", page: "anchor" },
-    { href: `${base}#location`, label: "Location", page: "anchor" },
-  ];
-}
-
-function isNavItemActive(
-  item: NavItem,
-  normalizedPath: string,
-  slug: string
-): boolean {
-  const base = `/${slug}`;
-  if (item.page === "menu") return normalizedPath === `${base}/menu`;
-  if (item.page === "halal-info") return normalizedPath === `${base}/halal-info`;
-  if (item.page === "overview") {
-    return normalizedPath === base;
-  }
-  return false;
-}
+import {
+  isRestaurantNavItemActive,
+  RESTAURANT_NAV_ITEMS,
+  restaurantNavHref,
+} from "@/lib/restaurant-nav";
 
 export function RestaurantNavigation({
   slug,
   restaurantName,
+  onSubdomain = false,
 }: {
   slug: string;
   restaurantName: string;
+  /** True when served via restaurant subdomain (middleware sets x-hrm-restaurant-slug). */
+  onSubdomain?: boolean;
 }) {
   const pathname = usePathname() ?? "";
-  const normalized = pathname.replace(/\/$/, "") || "/";
-  const items = navItems(slug);
 
   return (
     <header className="sticky top-0 z-50 border-b border-halal-100/80 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/75">
@@ -64,12 +37,18 @@ export function RestaurantNavigation({
             className="scrollbar-thin flex w-full items-center gap-1 overflow-x-auto pb-0.5 lg:w-auto lg:justify-end"
             aria-label="Restaurant navigation"
           >
-            {items.map((item) => {
-              const active = isNavItemActive(item, normalized, slug);
+            {RESTAURANT_NAV_ITEMS.map((item) => {
+              const href = restaurantNavHref(slug, item.target, onSubdomain);
+              const active = isRestaurantNavItemActive(
+                item.page,
+                pathname,
+                slug,
+                onSubdomain
+              );
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={item.target}
+                  href={href}
                   className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition ${
                     active
                       ? "bg-halal-600 text-white shadow-sm"
