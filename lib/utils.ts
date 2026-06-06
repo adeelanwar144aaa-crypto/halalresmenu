@@ -11,9 +11,7 @@ export function getSiteUrl(): string {
 }
 
 export function restaurantCanonicalUrl(slug: string, path = ""): string {
-  const base = getSiteUrl();
-  const suffix = path.startsWith("/") ? path : path ? `/${path}` : "";
-  return `${base}/${slug}${suffix}`;
+  return restaurantSubdomainUrl(slug, path);
 }
 
 /**
@@ -41,7 +39,7 @@ export function restaurantSubdomainUrl(slug: string, path = ""): string {
       return `${protocol}//${slug}.${apex}${port}${suffix}`;
     }
 
-    let apex = host.startsWith("www.") ? host.slice(4) : host;
+    const apex = host.startsWith("www.") ? host.slice(4) : host;
     return `${protocol}//${slug}.${apex}${port}${suffix}`;
   } catch {
     return `${base}/${slug}${suffix}`;

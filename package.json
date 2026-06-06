@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "pages:build": "npx @cloudflare/next-on-pages",
-    "deploy": "npm run pages:build",
+    "worker:build": "npx @cloudflare/next-on-pages --outdir .worker-next",
+    "deploy": "npm run worker:build && wrangler deploy",
     "start": "next start",
     "lint": "next lint",
     "seed": "npx tsx scripts/seed.ts",
@@ -55,6 +55,7 @@
     "tailwindcss": "^3.4.16",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vercel": "^47.0.4"
+    "vercel": "^47.0.4",
+    "wrangler": "^4.98.0"
   }
 }

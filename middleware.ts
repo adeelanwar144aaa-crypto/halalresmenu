@@ -55,6 +55,8 @@ export function extractRestaurantSubdomain(host: string): string | null {
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const slug = extractRestaurantSubdomain(host);
+
+  // Apex / www / no subdomain → serve the requested page (homepage, search, etc.)
   if (!slug) return NextResponse.next();
 
   const pathname = request.nextUrl.pathname;
