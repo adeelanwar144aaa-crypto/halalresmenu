@@ -18,6 +18,12 @@ function rootHostname(): string {
   }
 }
 
+function normalizeSlug(value: string | null | undefined): string | null {
+  const slug = value?.trim().toLowerCase() ?? "";
+  if (!slug || slug === "www") return null;
+  return slug;
+}
+
 /**
  * Returns restaurant slug when the request should be rewritten to `/[slug]...`.
  *
@@ -52,9 +58,24 @@ export function extractRestaurantSubdomain(host: string): string | null {
   return null;
 }
 
+/**
+ * Resolves the restaurant slug for the current request.
+ * 1. `x-subdomain` header from the Cloudflare Worker (e.g. the-great-chase)
+ * 2. Subdomain extracted from `x-forwarded-host` or `host`
+ */
+export function resolveRestaurantSlug(request: NextRequest): string | null {
+  const fromWorker = normalizeSlug(request.headers.get("x-subdomain"));
+  if (fromWorker) return fromWorker;
+
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    "";
+  return extractRestaurantSubdomain(host);
+}
+
 export async function middleware(request: NextRequest) {
-  const host = request.headers.get("host") ?? "";
-  const slug = extractRestaurantSubdomain(host);
+  const slug = resolveRestaurantSlug(request);
 
   // Apex / www / no subdomain → serve the requested page (homepage, search, etc.)
   if (!slug) return NextResponse.next();
