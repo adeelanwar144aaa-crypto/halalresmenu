@@ -5,6 +5,7 @@ import Link from "next/link";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
 import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";
 import { getSupabaseServer } from "@/lib/supabase";
+import { restaurantSubdomainUrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Search halal restaurants",
@@ -81,7 +82,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
             return (
               <li key={r.slug}>
                 <Link
-                  href={`/${r.slug}`}
+                  href={restaurantSubdomainUrl(r.slug)}
                   className="flex gap-4 rounded-2xl border border-zinc-100 bg-white p-4 shadow-card transition hover:border-halal-200 hover:shadow-card-hover sm:p-5"
                 >
                   <RestaurantThumbnail

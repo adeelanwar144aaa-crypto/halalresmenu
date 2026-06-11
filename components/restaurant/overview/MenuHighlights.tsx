@@ -5,6 +5,7 @@ import {
   getMenuHighlights,
   hasMenuData,
 } from "@/lib/menu-data";
+import { restaurantSubdomainUrl } from "@/lib/utils";
 
 export function MenuHighlights({
   restaurant,
@@ -43,7 +44,7 @@ export function MenuHighlights({
             </p>
           </div>
           <Link
-            href={`/${restaurant.slug}/menu`}
+            href={restaurantSubdomainUrl(restaurant.slug, "/menu")}
             className="inline-flex shrink-0 items-center justify-center rounded-xl bg-halal-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-halal-600/20 transition hover:bg-halal-700"
           >
             View full menu

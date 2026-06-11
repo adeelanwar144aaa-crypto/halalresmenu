@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSupabaseServer } from "@/lib/supabase";
+import { restaurantSubdomainUrl } from "@/lib/utils";
 import type { Restaurant } from "@/types/restaurant";
 import { SectionHeading } from "@/components/restaurant/SectionHeading";
 
@@ -43,7 +44,7 @@ export async function NearbyRestaurants({
             neighbors.map((n) => (
               <li key={n.slug}>
                 <Link
-                  href={`/${n.slug}`}
+                  href={restaurantSubdomainUrl(n.slug)}
                   className="group flex h-full flex-col rounded-2xl border border-zinc-100 bg-white p-5 shadow-card ring-1 ring-black/[0.03] transition hover:-translate-y-0.5 hover:border-halal-200 hover:shadow-card-hover"
                 >
                   <p className="font-semibold text-zinc-900 group-hover:text-halal-800">

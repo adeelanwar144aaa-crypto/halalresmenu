@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MenuData, Restaurant } from "@/types/restaurant";
 import { formatMenuPrice, hasMenuData } from "@/lib/menu-data";
+import { restaurantSubdomainUrl } from "@/lib/utils";
 import { SectionHeading } from "@/components/restaurant/SectionHeading";
 
 function MenuItemRow({
@@ -67,7 +68,7 @@ export function MenuSection({
             />
             {preview && (
               <Link
-                href={`/${restaurant.slug}/menu`}
+                href={restaurantSubdomainUrl(restaurant.slug, "/menu")}
                 className="inline-flex shrink-0 items-center justify-center rounded-xl bg-halal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-halal-600/20 transition hover:bg-halal-700"
               >
                 View full menu

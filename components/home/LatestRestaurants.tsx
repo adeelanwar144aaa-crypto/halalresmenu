@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { restaurantPhotoPlaceholder } from "@/lib/restaurant-placeholders";
+import { restaurantSubdomainUrl } from "@/lib/utils";
 
 export type LatestRestaurant = {
   slug: string;
@@ -68,7 +69,7 @@ export function LatestRestaurants({ items }: { items: LatestRestaurant[] }) {
                 key={r.slug}
                 className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-black/[0.04] transition hover:shadow-card-hover"
               >
-                <Link href={`/${r.slug}`} className="relative block aspect-[16/10] overflow-hidden bg-zinc-100">
+                <Link href={restaurantSubdomainUrl(r.slug)} className="relative block aspect-[16/10] overflow-hidden bg-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image}
@@ -85,7 +86,7 @@ export function LatestRestaurants({ items }: { items: LatestRestaurant[] }) {
                   </time>
                   <h3 className="mt-2 font-serif text-xl font-bold text-zinc-900">
                     <Link
-                      href={`/${r.slug}`}
+                      href={restaurantSubdomainUrl(r.slug)}
                       className="transition hover:text-halal-800"
                     >
                       {r.name}
@@ -96,7 +97,7 @@ export function LatestRestaurants({ items }: { items: LatestRestaurant[] }) {
                       "Halal restaurant"}
                   </p>
                   <Link
-                    href={`/${r.slug}`}
+                    href={restaurantSubdomainUrl(r.slug)}
                     className="mt-4 inline-flex text-sm font-semibold text-halal-700 transition hover:text-halal-900"
                   >
                     Read venue guide →
