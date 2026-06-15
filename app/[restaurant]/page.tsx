@@ -38,7 +38,9 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { restaurant } = await params;
   const row = await fetchRestaurantBySlug(restaurant);
-  if (!row) return { title: "Restaurant" };
+  if (!row) {
+    return createPageMetadata({ pageType: "overview", slug: restaurant });
+  }
 
   const supabase = getSupabaseServer();
   let tablePhotos: RestaurantPhoto[] = [];
@@ -53,15 +55,12 @@ export async function generateMetadata({
   }
   const ogImage = firstRestaurantPhotoUrl(row.photos, tablePhotos);
 
-  const description =
-    row.cuisine_type && row.city
-      ? `${row.name} serves ${row.cuisine_type} in ${row.city}. Halal details, menu, reviews, and prayer-aware info.`
-      : `Overview, halal information, and dining details for ${row.name}.`;
-
   return createPageMetadata({
-    title: `${row.name} — Overview`,
-    description,
-    canonicalPath: `/${restaurant}`,
+    pageType: "overview",
+    slug: restaurant,
+    name: row.name,
+    cuisine: row.cuisine_type,
+    city: row.city,
     ogImage,
   });
 }

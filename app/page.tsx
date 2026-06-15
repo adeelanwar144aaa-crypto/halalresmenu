@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { EditorialIntro } from "@/components/home/EditorialIntro";
 import { FeaturedCities } from "@/components/home/FeaturedCities";
 import { HomeHeroSearch } from "@/components/home/HomeHeroSearch";
 import { LatestRestaurants } from "@/components/home/LatestRestaurants";
 import { getSupabaseServer } from "@/lib/supabase";
+
+export const metadata: Metadata = {
+  title:
+    "HalalResMenu | Find Halal Restaurants, Menus & Prayer Times Near You",
+  description:
+    "Browse halal-certified restaurants, full menus, prayer times, and mosque locations across the UK. Find your nearest halal restaurant on HalalResMenu.",
+};
 
 export default async function HomePage() {
   const supabase = getSupabaseServer();

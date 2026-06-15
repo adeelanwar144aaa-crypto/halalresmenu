@@ -7,11 +7,24 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "HalalResMenu — Halal restaurants, menus, and prayer-aware dining",
+    default: "HalalResMenu | Halal Restaurants, Menus & Prayer-Aware Dining",
     template: "%s | HalalResMenu",
   },
   description:
-    "Discover halal-certified restaurants, menus, nearby mosques, and prayer times.",
+    "Discover halal-certified restaurants, menus, nearby mosques, and prayer times across the UK.",
+  openGraph: {
+    title: "HalalResMenu | Halal Restaurants & Menus",
+    description:
+      "Discover halal-certified restaurants, menus, nearby mosques, and prayer times across the UK.",
+    siteName: "HalalResMenu",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HalalResMenu | Halal Restaurants & Menus",
+    description:
+      "Discover halal-certified restaurants, menus, nearby mosques, and prayer times across the UK.",
+  },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http")
       ? process.env.NEXT_PUBLIC_SITE_URL

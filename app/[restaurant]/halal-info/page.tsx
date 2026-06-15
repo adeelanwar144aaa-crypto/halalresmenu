@@ -19,11 +19,14 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { restaurant } = await params;
   const row = await fetchRestaurantBySlug(restaurant);
-  if (!row) return { title: "Halal info" };
+  if (!row) {
+    return createPageMetadata({ pageType: "halal-info", slug: restaurant });
+  }
   return createPageMetadata({
-    title: `${row.name} — Halal information`,
-    description: `Halal certification, facilities, and policies for ${row.name}.`,
-    canonicalPath: `/${restaurant}/halal-info`,
+    pageType: "halal-info",
+    slug: restaurant,
+    name: row.name,
+    city: row.city,
   });
 }
 

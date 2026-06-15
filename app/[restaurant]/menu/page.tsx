@@ -20,11 +20,14 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { restaurant } = await params;
   const row = await fetchRestaurantBySlug(restaurant);
-  if (!row) return { title: "Menu" };
+  if (!row) {
+    return createPageMetadata({ pageType: "menu", slug: restaurant });
+  }
   return createPageMetadata({
-    title: `${row.name} — Menu`,
-    description: `Menu for ${row.name}${row.city ? ` in ${row.city}` : ""}.`,
-    canonicalPath: `/${restaurant}/menu`,
+    pageType: "menu",
+    slug: restaurant,
+    name: row.name,
+    city: row.city,
   });
 }
 
