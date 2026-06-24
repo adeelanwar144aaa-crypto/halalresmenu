@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CityCardBackground } from "@/components/city/CityCardBackground";
 import { FEATURED_CITIES } from "@/lib/featured-cities";
 
 export function FeaturedCities() {
@@ -24,25 +25,28 @@ export function FeaturedCities() {
             <Link
               key={city.slug}
               href={`/city/${city.slug}`}
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-halal-800 to-halal-950 p-6 text-white shadow-card ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-card-hover"
+              className="group relative min-h-[220px] overflow-hidden rounded-2xl p-6 text-white shadow-card ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-card-hover"
             >
-              <div
-                className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-halal-500/20 blur-2xl transition group-hover:bg-halal-400/30"
-                aria-hidden
+              <CityCardBackground
+                slug={city.slug}
+                alt={`${city.name} skyline`}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
-              <p className="text-xs font-semibold uppercase tracking-wider text-halal-200">
-                {city.blurb}
-              </p>
-              <h3 className="mt-2 text-xl font-bold tracking-tight">
-                {city.name}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-halal-100/90">
-                {city.restaurantHint}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-halal-200 transition group-hover:text-white">
-                View restaurants
-                <span aria-hidden>→</span>
-              </span>
+              <div className="relative z-10 flex h-full flex-col">
+                <p className="text-xs font-semibold uppercase tracking-wider text-halal-200">
+                  {city.blurb}
+                </p>
+                <h3 className="mt-2 text-xl font-bold tracking-tight">
+                  {city.name}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-halal-100/90">
+                  {city.restaurantHint}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-halal-200 transition group-hover:text-white">
+                  View restaurants
+                  <span aria-hidden>→</span>
+                </span>
+              </div>
             </Link>
           ))}
         </div>

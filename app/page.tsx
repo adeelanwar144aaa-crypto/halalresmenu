@@ -21,15 +21,16 @@ export default async function HomePage() {
     city: string | null;
     cuisine_type: string | null;
     logo_url: string | null;
+    photos: unknown;
     created_at: string;
   }[] = [];
 
   if (supabase) {
     const { data } = await supabase
       .from("restaurants")
-      .select("slug,name,city,cuisine_type,logo_url,created_at")
+      .select("slug,name,city,cuisine_type,logo_url,photos,created_at")
       .order("created_at", { ascending: false })
-      .limit(15);
+      .limit(12);
     latest = (data ?? []) as typeof latest;
   }
 

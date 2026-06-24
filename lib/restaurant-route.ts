@@ -7,6 +7,10 @@ const RESERVED_SEGMENTS = new Set([
   "city",
   "sitemaps",
   "sitemap_index.xml",
+  "about",
+  "contact",
+  "privacy",
+  "terms-conditions",
 ]);
 
 /**
@@ -18,6 +22,14 @@ export function isRestaurantPathname(pathname: string): boolean {
     return false;
   }
   if (path.startsWith("/sitemap") || path.startsWith("/city")) return false;
+  if (
+    path === "/about" ||
+    path === "/contact" ||
+    path === "/privacy" ||
+    path.startsWith("/terms-conditions")
+  ) {
+    return false;
+  }
 
   const match = path.match(/^\/([^/]+)(?:\/(menu|halal-info))?$/);
   if (!match) return false;

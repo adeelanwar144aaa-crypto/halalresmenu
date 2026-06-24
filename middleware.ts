@@ -66,7 +66,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/favicon") ||
     pathname === "/robots.txt" ||
     pathname.startsWith("/sitemap") ||
-    pathname.startsWith("/sitemaps/")
+    pathname.startsWith("/sitemaps/") ||
+    pathname === "/about" ||
+    pathname === "/contact" ||
+    pathname === "/privacy" ||
+    pathname.startsWith("/terms-conditions")
   ) {
     return forwardWithPathname(request, pathname);
   }

@@ -18,7 +18,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       {showMarketingChrome && <Header />}
       <main className="flex-1">{children}</main>
-      {showMarketingChrome && <Footer />}
+      <Footer />
     </div>
   );
 }

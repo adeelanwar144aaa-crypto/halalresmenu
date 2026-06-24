@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CityCardBackground } from "@/components/city/CityCardBackground";
 import { cityDisplayName, cityHubPath } from "@/lib/city-slug";
 import { fetchCitiesWithCounts } from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
@@ -59,15 +60,18 @@ export default async function CitiesIndexPage() {
               <li key={city.slug}>
                 <Link
                   href={cityHubPath(city.slug)}
-                  className="group flex h-full flex-col rounded-2xl border border-zinc-100 bg-white p-6 shadow-card transition hover:border-halal-200 hover:shadow-card-hover"
+                  className="group relative flex min-h-[180px] h-full flex-col overflow-hidden rounded-2xl p-6 text-white shadow-card ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-card-hover"
                 >
-                  <h2 className="font-serif text-xl font-bold text-zinc-900 transition group-hover:text-halal-800">
-                    {name}
-                  </h2>
-                  <p className="mt-2 text-sm text-zinc-500">{countLabel}</p>
-                  <span className="mt-auto pt-4 text-sm font-semibold text-halal-700 transition group-hover:text-halal-900">
-                    View halal restaurants →
-                  </span>
+                  <CityCardBackground slug={city.slug} alt={`${name} cityscape`} />
+                  <div className="relative z-10 flex h-full flex-col">
+                    <h2 className="font-serif text-xl font-bold tracking-tight">
+                      {name}
+                    </h2>
+                    <p className="mt-2 text-sm text-halal-100/90">{countLabel}</p>
+                    <span className="mt-auto pt-4 text-sm font-semibold text-halal-200 transition group-hover:text-white">
+                      View halal restaurants →
+                    </span>
+                  </div>
                 </Link>
               </li>
             );
