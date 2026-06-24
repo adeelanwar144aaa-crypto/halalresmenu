@@ -1,4 +1,4 @@
-import { extractRestaurantSubdomain } from "@/middleware";
+import { extractRestaurantSubdomain } from "@/lib/host-routing";
 
 /** Host header from a Request (supports Cloudflare / reverse proxies). */
 export function requestHost(request: Request): string {

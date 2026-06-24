@@ -1,7 +1,10 @@
 name = "halalresmenu"
-main = ".worker-next/index.mjs"
+main = "worker/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NEXT_PUBLIC_ROOT_DOMAIN = "halalresmenu.com"
 
 [site]
 bucket = ".worker-next/assets"

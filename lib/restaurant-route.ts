@@ -6,6 +6,7 @@ const RESERVED_SEGMENTS = new Set([
   "_next",
   "city",
   "sitemaps",
+  "sitemap_index.xml",
 ]);
 
 /**
