@@ -1,5 +1,11 @@
-import { citySlugToPattern } from "@/lib/city-slug";
+import { citySlugToPattern, slugifyCity } from "@/lib/city-slug";
 import { getSupabaseServer } from "@/lib/supabase";
+
+export type CityWithCount = {
+  slug: string;
+  name: string;
+  count: number;
+};
 
 export const CITY_PAGE_SIZE = 50;
 
@@ -89,4 +95,49 @@ export async function fetchAllCityRestaurants(
   }
 
   return rows;
+}
+
+/** Distinct cities with published restaurant counts, largest first. */
+export async function fetchCitiesWithCounts(): Promise<CityWithCount[]> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+
+  const bySlug = new Map<string, { name: string; count: number }>();
+  let offset = 0;
+  const pageSize = 1000;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("city")
+      .not("city", "is", null)
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(`cities with counts: ${error.message}`);
+    }
+
+    if (!data?.length) break;
+
+    for (const row of data) {
+      const name = String(row.city ?? "").trim();
+      if (!name) continue;
+      const slug = slugifyCity(name);
+      if (!slug) continue;
+
+      const existing = bySlug.get(slug);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        bySlug.set(slug, { name, count: 1 });
+      }
+    }
+
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return [...bySlug.entries()]
+    .map(([slug, { name, count }]) => ({ slug, name, count }))
+    .sort((a, b) => b.count - a.count);
 }

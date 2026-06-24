@@ -14,7 +14,7 @@ export function Header() {
           <Link href="/" className="transition hover:text-halal-800">
             Home
           </Link>
-          <Link href="/#cities" className="transition hover:text-halal-800">
+          <Link href="/city" className="transition hover:text-halal-800">
             Cities
           </Link>
         </nav>

@@ -54,12 +54,12 @@ export function CityLoadMore({
         <CityRestaurantCard key={r.slug} restaurant={r} />
       ))}
       {error ? (
-        <li className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <li className="col-span-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </li>
       ) : null}
       {hasMore ? (
-        <li className="flex justify-center pt-4">
+        <li className="col-span-full flex w-full justify-center pt-4">
           <button
             type="button"
             onClick={handleLoadMore}

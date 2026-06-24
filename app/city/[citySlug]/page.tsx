@@ -55,7 +55,7 @@ export default async function CityHubPage({ params }: PageProps) {
   const hasMore = total > CITY_PAGE_SIZE;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <Link
         href="/"
         className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
@@ -80,7 +80,7 @@ export default async function CityHubPage({ params }: PageProps) {
         — full directory for this city.
       </p>
 
-      <ul className="mt-10 space-y-4">
+      <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <CityRestaurantList restaurants={restaurants} />
         <CityLoadMore
           citySlug={normalized}
