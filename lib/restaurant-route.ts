@@ -4,6 +4,8 @@ const RESERVED_SEGMENTS = new Set([
   "invalid-subdomain",
   "api",
   "_next",
+  "city",
+  "sitemaps",
 ]);
 
 /**
@@ -14,7 +16,7 @@ export function isRestaurantPathname(pathname: string): boolean {
   if (path === "/" || path === "/search" || path.startsWith("/invalid-subdomain")) {
     return false;
   }
-  if (path.startsWith("/sitemap")) return false;
+  if (path.startsWith("/sitemap") || path.startsWith("/city")) return false;
 
   const match = path.match(/^\/([^/]+)(?:\/(menu|halal-info))?$/);
   if (!match) return false;

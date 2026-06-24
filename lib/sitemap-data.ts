@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { cityAllPath, cityHubPath, slugifyCity } from "@/lib/city-slug";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
 import { getSupabaseServer } from "@/lib/supabase";
 import { getSiteUrl, restaurantSubdomainUrl } from "@/lib/utils";
@@ -84,6 +85,77 @@ export async function fetchRestaurantSitemapRow(
   return { slug: rowSlug, updated_at: data.updated_at };
 }
 
+/** Distinct cities that have at least one restaurant (for city hub sitemaps). */
+export async function fetchDistinctCitySlugs(): Promise<
+  { slug: string; name: string }[]
+> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+
+  const bySlug = new Map<string, string>();
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("city")
+      .not("city", "is", null)
+      .order("city", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`city list fetch: ${error.message}`);
+    }
+
+    if (!data?.length) break;
+
+    for (const row of data) {
+      const name = String(row.city ?? "").trim();
+      if (!name) continue;
+      const slug = slugifyCity(name);
+      if (slug && !bySlug.has(slug)) {
+        bySlug.set(slug, name);
+      }
+    }
+
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return [...bySlug.entries()]
+    .map(([slug, name]) => ({ slug, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** City hub + full-list pages on the apex domain. */
+export function buildCitySitemapEntries(
+  cities: { slug: string; name: string }[]
+): MetadataRoute.Sitemap {
+  const apex = getApexOrigin();
+  const now = new Date();
+
+  const entries: MetadataRoute.Sitemap = [];
+
+  for (const city of cities) {
+    entries.push(
+      {
+        url: `${apex}${cityHubPath(city.slug)}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.75,
+      },
+      {
+        url: `${apex}${cityAllPath(city.slug)}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.65,
+      }
+    );
+  }
+
+  return entries;
+}
+
 /** Main site pages on the apex domain. */
 export function buildMainSiteSitemapEntries(): MetadataRoute.Sitemap {
   const apex = getApexOrigin();
@@ -145,6 +217,10 @@ export function buildApexSitemapIndexEntries(
   const entries: SitemapIndexEntry[] = [
     {
       loc: `${apex}/sitemap-main.xml`,
+      lastModified: now,
+    },
+    {
+      loc: `${apex}/sitemaps/cities.xml`,
       lastModified: now,
     },
   ];

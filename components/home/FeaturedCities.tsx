@@ -23,7 +23,7 @@ export function FeaturedCities() {
           {FEATURED_CITIES.map((city) => (
             <Link
               key={city.slug}
-              href={`/search?city=${encodeURIComponent(city.name)}`}
+              href={`/city/${city.slug}`}
               className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-halal-800 to-halal-950 p-6 text-white shadow-card ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-card-hover"
             >
               <div

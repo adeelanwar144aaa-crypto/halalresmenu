@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 
 export const runtime = "edge";
 import Link from "next/link";
+import { permanentRedirect } from "next/navigation";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
+import { slugifyCity, cityHubPath } from "@/lib/city-slug";
 import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";
 import { getSupabaseServer } from "@/lib/supabase";
 import { restaurantSubdomainUrl } from "@/lib/utils";
@@ -26,26 +28,28 @@ type SearchResult = {
 
 export default async function SearchPage({ searchParams }: PageProps) {
   const { q, city } = await searchParams;
-  const query = (q ?? city ?? "").trim();
-  const mode = city ? "city" : "name";
+
+  if (city?.trim()) {
+    const slug = slugifyCity(city.trim());
+    if (slug) {
+      permanentRedirect(cityHubPath(slug));
+    }
+  }
+
+  const query = (q ?? "").trim();
 
   let results: SearchResult[] = [];
 
   const supabase = getSupabaseServer();
   if (supabase && query.length >= 2) {
     const pattern = `%${query}%`;
-    let request = supabase
+    const { data } = await supabase
       .from("restaurants")
       .select("slug,name,city,cuisine_type,photos")
+      .ilike("name", pattern)
+      .order("name", { ascending: true })
       .limit(48);
 
-    if (mode === "city") {
-      request = request.ilike("city", pattern);
-    } else {
-      request = request.ilike("name", pattern);
-    }
-
-    const { data } = await request.order("name", { ascending: true });
     results = (data ?? []) as SearchResult[];
   }
 
@@ -62,9 +66,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       </h1>
       <p className="mt-2 text-zinc-600">
         {query
-          ? mode === "city"
-            ? `Restaurants in “${query}”`
-            : `Matching “${query}”`
+          ? `Matching “${query}”`
           : "Enter a city or restaurant name on the homepage to search."}
       </p>
 
@@ -73,7 +75,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           <li className="rounded-2xl border border-dashed border-zinc-200 bg-white p-8 text-center text-zinc-600">
             {query.length < 2
               ? "Type at least two characters to search."
-              : "No restaurants found. Try another city or spelling."}
+              : "No restaurants found. Try another spelling."}
           </li>
         ) : (
           results.map((r) => {

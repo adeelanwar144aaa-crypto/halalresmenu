@@ -29,7 +29,7 @@ export default async function HomePage() {
       .from("restaurants")
       .select("slug,name,city,cuisine_type,logo_url,created_at")
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(15);
     latest = (data ?? []) as typeof latest;
   }
 
