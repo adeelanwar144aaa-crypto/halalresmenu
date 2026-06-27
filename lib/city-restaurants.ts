@@ -1,4 +1,6 @@
 import { citySlugToPattern, slugifyCity } from "@/lib/city-slug";
+import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
+import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export type CityWithCount = {
@@ -34,9 +36,7 @@ export async function fetchCityRestaurants(
   const pattern = citySlugToPattern(citySlug);
 
   const supabase = getSupabaseServer();
-  if (!supabase) {
-    return { restaurants: [], total: 0 };
-  }
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const { count, error: countError } = await supabase
     .from("restaurants")
@@ -44,7 +44,8 @@ export async function fetchCityRestaurants(
     .ilike("city", pattern);
 
   if (countError) {
-    throw new Error(`city restaurant count: ${countError.message}`);
+    throwIfSupabaseUnavailable(countError, "city restaurant count");
+    throw countError;
   }
 
   const { data, error } = await supabase
@@ -55,7 +56,8 @@ export async function fetchCityRestaurants(
     .range(offset, offset + limit - 1);
 
   if (error) {
-    throw new Error(`city restaurants fetch: ${error.message}`);
+    throwIfSupabaseUnavailable(error, "city restaurants fetch");
+    throw error;
   }
 
   return {
@@ -70,7 +72,7 @@ export async function fetchAllCityRestaurants(
 ): Promise<CityRestaurant[]> {
   const pattern = citySlugToPattern(citySlug);
   const supabase = getSupabaseServer();
-  if (!supabase) return [];
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const rows: CityRestaurant[] = [];
   let offset = 0;
@@ -85,7 +87,8 @@ export async function fetchAllCityRestaurants(
       .range(offset, offset + pageSize - 1);
 
     if (error) {
-      throw new Error(`city restaurants fetch all: ${error.message}`);
+      throwIfSupabaseUnavailable(error, "city restaurants fetch all");
+      throw error;
     }
 
     if (!data?.length) break;
@@ -100,7 +103,7 @@ export async function fetchAllCityRestaurants(
 /** Distinct cities with published restaurant counts, largest first. */
 export async function fetchCitiesWithCounts(): Promise<CityWithCount[]> {
   const supabase = getSupabaseServer();
-  if (!supabase) return [];
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const bySlug = new Map<string, { name: string; count: number }>();
   let offset = 0;
@@ -114,7 +117,8 @@ export async function fetchCitiesWithCounts(): Promise<CityWithCount[]> {
       .range(offset, offset + pageSize - 1);
 
     if (error) {
-      throw new Error(`cities with counts: ${error.message}`);
+      throwIfSupabaseUnavailable(error, "cities with counts");
+      throw error;
     }
 
     if (!data?.length) break;

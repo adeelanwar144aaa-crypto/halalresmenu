@@ -6,13 +6,12 @@ import {
 import { Header } from "@/components/layout/Header";
 import { cityDisplayName, slugifyCity } from "@/lib/city-slug";
 import { isRestaurantPathname } from "@/lib/restaurant-route";
-import { fetchRestaurantBySlug } from "@/lib/supabase";
+import { fetchRestaurantCityBySlug } from "@/lib/supabase";
 
 async function resolveFooterRestaurantCity(
   slug: string
 ): Promise<FooterRestaurantCity | null> {
-  const row = await fetchRestaurantBySlug(slug);
-  const cityRaw = row?.city?.trim();
+  const cityRaw = await fetchRestaurantCityBySlug(slug);
   if (!cityRaw) return null;
 
   const citySlug = slugifyCity(cityRaw);

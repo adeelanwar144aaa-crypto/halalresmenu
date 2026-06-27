@@ -6,7 +6,8 @@ import {
   isApexHost,
   normalizeSlug,
 } from "@/lib/host-routing";
-import { restaurantSlugExistsViaRest } from "@/lib/supabase-rest-edge";
+import { maintenance503Response } from "@/lib/maintenance-response";
+import { checkRestaurantSlugViaRest } from "@/lib/supabase-rest-edge";
 
 /**
  * Resolves the restaurant slug for the current request.
@@ -81,8 +82,11 @@ export async function middleware(request: NextRequest) {
     return forwardWithPathname(request, pathname);
   }
 
-  const exists = await restaurantSlugExistsViaRest(slug);
-  if (!exists) {
+  const slugResult = await checkRestaurantSlugViaRest(slug);
+  if (slugResult === "unavailable") {
+    return maintenance503Response();
+  }
+  if (slugResult === "missing") {
     return forwardWithPathname(
       request,
       "/invalid-subdomain",

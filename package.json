@@ -28,7 +28,8 @@
     "db:takeaway-defaults": "node -e \"console.log('Run scripts/migrations/set-has-takeaway-delivery.sql in the Supabase SQL editor.')\"",
     "db:google-places": "node -e \"console.log('Run scripts/migrations/add-google-places-columns.sql in the Supabase SQL editor.')\"",
     "db:meta-tags": "node -e \"console.log('Run scripts/migrations/add-meta-tags-columns.sql in the Supabase SQL editor.')\"",
-    "generate-meta-tags": "node scripts/generate-meta-tags.js"
+    "generate-meta-tags": "node scripts/generate-meta-tags.js",
+    "import-restaurants-csv": "node scripts/import-restaurants-csv.js"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.7",
@@ -48,9 +49,11 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
+    "csv-parse": "^7.0.0",
     "dotenv": "^16.4.7",
     "eslint": "^9.16.0",
     "eslint-config-next": "^15.1.0",
+    "pg": "^8.22.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
     "tsx": "^4.19.2",

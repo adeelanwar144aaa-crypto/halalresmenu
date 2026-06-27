@@ -5,6 +5,9 @@ import { RestaurantNavigation } from "@/components/layout/RestaurantNavigation";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 
+/** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
+export const revalidate = 1800;
+
 export default async function RestaurantLayout({
   children,
   params,

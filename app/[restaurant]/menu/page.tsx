@@ -15,6 +15,9 @@ import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
 
+/** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
+export const revalidate = 1800;
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {

@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
+import { cacheControlHeader, CACHE_TTL } from "@/lib/cache-config";
 import { cityAllPath, cityHubPath, slugifyCity } from "@/lib/city-slug";
+import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
+import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
 import { getSupabaseServer } from "@/lib/supabase";
 import { getSiteUrl, restaurantSubdomainUrl } from "@/lib/utils";
@@ -29,7 +32,7 @@ export function getApexOrigin(): string {
 
 export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]> {
   const supabase = getSupabaseServer();
-  if (!supabase) return [];
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const rows: RestaurantSitemapRow[] = [];
   let offset = 0;
@@ -43,7 +46,8 @@ export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]>
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (error) {
-      throw new Error(`restaurants fetch: ${error.message}`);
+      throwIfSupabaseUnavailable(error, "restaurants fetch");
+      throw error;
     }
 
     if (!data?.length) break;
@@ -69,7 +73,7 @@ export async function fetchRestaurantSitemapRow(
   if (!isSubdomainSafeSlug(normalized)) return null;
 
   const supabase = getSupabaseServer();
-  if (!supabase) return null;
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const { data, error } = await supabase
     .from("restaurants")
@@ -77,7 +81,11 @@ export async function fetchRestaurantSitemapRow(
     .eq("slug", normalized)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    throwIfSupabaseUnavailable(error, "restaurant sitemap row");
+    return null;
+  }
+  if (!data) return null;
 
   const rowSlug = String(data.slug ?? "").trim();
   if (!isSubdomainSafeSlug(rowSlug)) return null;
@@ -90,7 +98,7 @@ export async function fetchDistinctCitySlugs(): Promise<
   { slug: string; name: string }[]
 > {
   const supabase = getSupabaseServer();
-  if (!supabase) return [];
+  if (!supabase) throw new SupabaseUnavailableError();
 
   const bySlug = new Map<string, string>();
   let offset = 0;
@@ -104,7 +112,8 @@ export async function fetchDistinctCitySlugs(): Promise<
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (error) {
-      throw new Error(`city list fetch: ${error.message}`);
+      throwIfSupabaseUnavailable(error, "city list fetch");
+      throw error;
     }
 
     if (!data?.length) break;
@@ -269,12 +278,10 @@ export function buildApexSitemapIndexEntries(
 
 export const SITEMAP_CACHE_HEADERS = {
   "Content-Type": "application/xml; charset=utf-8",
-  "Cache-Control":
-    "public, max-age=0, s-maxage=86400, stale-while-revalidate=3600",
+  "Cache-Control": cacheControlHeader(CACHE_TTL.SITEMAP),
 } as const;
 
 export const ROBOTS_CACHE_HEADERS = {
   "Content-Type": "text/plain; charset=utf-8",
-  "Cache-Control":
-    "public, max-age=0, s-maxage=86400, stale-while-revalidate=3600",
+  "Cache-Control": cacheControlHeader(CACHE_TTL.SITEMAP),
 } as const;

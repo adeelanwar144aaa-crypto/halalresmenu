@@ -8,7 +8,8 @@ import {
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
 import { sitemapIndexToXml } from "@/lib/sitemap-xml";
 
-export const revalidate = 86400;
+/** Keep in sync with `CACHE_TTL.SITEMAP` in lib/cache-config.ts */
+export const revalidate = 3600;
 
 /**
  * Legacy URL — returns the same apex sitemap index as /sitemap.xml

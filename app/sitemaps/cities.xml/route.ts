@@ -8,7 +8,8 @@ import {
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
 import { sitemapToXml } from "@/lib/sitemap-xml";
 
-export const revalidate = 86400;
+/** Keep in sync with `CACHE_TTL.SITEMAP` in lib/cache-config.ts */
+export const revalidate = 3600;
 
 export async function GET(request: Request) {
   if (restaurantSlugFromRequest(request)) {

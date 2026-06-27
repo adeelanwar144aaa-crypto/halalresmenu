@@ -1,5 +1,9 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 import type { Restaurant } from "@/types/restaurant";
+import type { RestaurantPhoto, Review } from "@/types/restaurant";
+import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
+import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 
 const PLACEHOLDER_FRAGMENTS = [
   "your-supabase-url",
@@ -91,11 +95,11 @@ export function getSupabaseServer(): SupabaseClient | null {
   return serverClient;
 }
 
-export async function fetchRestaurantBySlug(
+async function fetchRestaurantBySlugImpl(
   slug: string
 ): Promise<Restaurant | null> {
   const supabase = getSupabaseServer();
-  if (!supabase) return null;
+  if (!supabase) throw new SupabaseUnavailableError();
   try {
     const { data, error } = await supabase
       .from("restaurants")
@@ -104,14 +108,101 @@ export async function fetchRestaurantBySlug(
       )
       .eq("slug", slug)
       .maybeSingle();
-    if (error || !data) return null;
+    if (error) {
+      throwIfSupabaseUnavailable(error, "fetchRestaurantBySlug");
+      return null;
+    }
+    if (!data) return null;
     return data as Restaurant;
-  } catch {
+  } catch (err) {
+    if (err instanceof SupabaseUnavailableError) throw err;
+    throwIfSupabaseUnavailable(err, "fetchRestaurantBySlug");
     return null;
   }
 }
 
+/** Deduped per request — layout, metadata, and page share one round trip. */
+export const fetchRestaurantBySlug = cache(fetchRestaurantBySlugImpl);
+
+async function fetchRestaurantCityBySlugImpl(
+  slug: string
+): Promise<string | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("city")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) {
+      throwIfSupabaseUnavailable(error, "fetchRestaurantCityBySlug");
+      return null;
+    }
+    if (!data) return null;
+    const city = String(data.city ?? "").trim();
+    return city || null;
+  } catch (err) {
+    if (err instanceof SupabaseUnavailableError) throw err;
+    throwIfSupabaseUnavailable(err, "fetchRestaurantCityBySlug");
+    return null;
+  }
+}
+
+/** Lightweight city lookup for footer (avoids full restaurant row). */
+export const fetchRestaurantCityBySlug = cache(fetchRestaurantCityBySlugImpl);
+
+async function fetchRestaurantPhotosImpl(
+  restaurantId: string
+): Promise<RestaurantPhoto[]> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+  try {
+    const { data } = await supabase
+      .from("restaurant_photos")
+      .select("url,is_primary,restaurant_id")
+      .eq("restaurant_id", restaurantId)
+      .order("is_primary", { ascending: false })
+      .limit(12);
+    return (data ?? []) as RestaurantPhoto[];
+  } catch {
+    return [];
+  }
+}
+
+export const fetchRestaurantPhotos = cache(fetchRestaurantPhotosImpl);
+
+async function fetchRestaurantReviewsImpl(
+  restaurantId: string
+): Promise<Review[]> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return [];
+  try {
+    const { data } = await supabase
+      .from("reviews")
+      .select("id,restaurant_id,source,author_name,rating,content,date,is_verified")
+      .eq("restaurant_id", restaurantId)
+      .order("date", { ascending: false })
+      .limit(12);
+    return (data ?? []) as Review[];
+  } catch {
+    return [];
+  }
+}
+
+export const fetchRestaurantReviews = cache(fetchRestaurantReviewsImpl);
+
 export async function restaurantSlugExists(slug: string): Promise<boolean> {
-  const row = await fetchRestaurantBySlug(slug);
-  return row !== null;
+  const supabase = getSupabaseServer();
+  if (!supabase) return false;
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    return !error && data != null;
+  } catch {
+    return false;
+  }
 }

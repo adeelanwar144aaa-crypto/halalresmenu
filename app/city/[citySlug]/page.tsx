@@ -16,6 +16,9 @@ import { getApexOrigin } from "@/lib/sitemap-data";
 
 export const runtime = "edge";
 
+/** Keep in sync with `CACHE_TTL.HOME_AND_CITY` in lib/cache-config.ts */
+export const revalidate = 3600;
+
 type PageProps = { params: Promise<{ citySlug: string }> };
 
 export async function generateMetadata({

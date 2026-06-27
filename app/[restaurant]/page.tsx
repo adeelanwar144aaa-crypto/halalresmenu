@@ -26,12 +26,18 @@ import {
   resolveRestaurantGalleryUrls,
 } from "@/lib/restaurant-photos";
 import { getMenuSchemaSample, parseMenuData } from "@/lib/menu-data";
-import { fetchRestaurantBySlug, getSupabaseServer } from "@/lib/supabase";
+import {
+  fetchRestaurantBySlug,
+  fetchRestaurantPhotos,
+  fetchRestaurantReviews,
+} from "@/lib/supabase";
 import { getSiteUrl, restaurantCanonicalUrl } from "@/lib/utils";
-import type { RestaurantPhoto, Review } from "@/types/restaurant";
 import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
+
+/** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
+export const revalidate = 1800;
 
 export async function generateMetadata({
   params,
@@ -42,17 +48,7 @@ export async function generateMetadata({
     return createPageMetadata({ pageType: "overview", slug: restaurant });
   }
 
-  const supabase = getSupabaseServer();
-  let tablePhotos: RestaurantPhoto[] = [];
-  if (supabase) {
-    const { data } = await supabase
-      .from("restaurant_photos")
-      .select("url,is_primary")
-      .eq("restaurant_id", row.id)
-      .order("is_primary", { ascending: false })
-      .limit(12);
-    tablePhotos = (data ?? []) as RestaurantPhoto[];
-  }
+  const tablePhotos = await fetchRestaurantPhotos(row.id);
   const ogImage = firstRestaurantPhotoUrl(row.photos, tablePhotos);
 
   return createPageMetadata({
@@ -72,32 +68,10 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   const restaurantName = row.name?.trim() || "Restaurant";
 
-  const supabase = getSupabaseServer();
-  let photos: RestaurantPhoto[] = [];
-  let reviews: Review[] = [];
-
-  if (supabase) {
-    try {
-      const [p, r] = await Promise.all([
-        supabase
-          .from("restaurant_photos")
-          .select("*")
-          .eq("restaurant_id", row.id)
-          .order("is_primary", { ascending: false })
-          .limit(12),
-        supabase
-          .from("reviews")
-          .select("*")
-          .eq("restaurant_id", row.id)
-          .order("date", { ascending: false })
-          .limit(12),
-      ]);
-      photos = (p.data ?? []) as RestaurantPhoto[];
-      reviews = (r.data ?? []) as Review[];
-    } catch (err) {
-      console.error("Restaurant overview: photo/review fetch failed:", err);
-    }
-  }
+  const [photos, reviews] = await Promise.all([
+    fetchRestaurantPhotos(row.id),
+    fetchRestaurantReviews(row.id),
+  ]);
 
   const menuData = parseMenuData(row.menu_data);
 

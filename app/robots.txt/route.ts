@@ -1,10 +1,11 @@
 export const runtime = "edge";
 
-import { getApexOrigin } from "@/lib/sitemap-data";
+import { getApexOrigin, ROBOTS_CACHE_HEADERS } from "@/lib/sitemap-data";
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
-export const revalidate = 86400;
+/** Keep in sync with `CACHE_TTL.SITEMAP` in lib/cache-config.ts */
+export const revalidate = 3600;
 
 const ROBOT_AGENTS = [
   "User-agent: *",
@@ -43,10 +44,6 @@ export async function GET(request: Request) {
   const body = [...ROBOT_AGENTS, "", `Sitemap: ${sitemapUrl}`, ""].join("\n");
 
   return new Response(body, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control":
-        "public, max-age=0, s-maxage=86400, stale-while-revalidate=3600",
-    },
+    headers: ROBOTS_CACHE_HEADERS,
   });
 }

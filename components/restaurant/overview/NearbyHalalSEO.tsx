@@ -38,53 +38,55 @@ async function NearbyHalalSEOContent({
   let rows: Neighbor[] = [];
 
   if (supabase) {
-    const { data } = await supabase
-      .from("restaurants")
-      .select("slug,name,cuisine_type,latitude,longitude")
-      .neq("id", restaurant.id)
-      .limit(60);
-    const list = (data ?? []) as Neighbor[];
     const lat = restaurant.latitude;
     const lng = restaurant.longitude;
 
-    if (lat != null && lng != null) {
-      rows = list
-        .filter((r) => r.latitude != null && r.longitude != null)
-        .map((r) => ({
-          ...r,
-          km: haversineKm(lat, lng, r.latitude!, r.longitude!),
-        }))
-        .sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
-    }
-
-    if (rows.length < 5 && restaurant.city) {
+    if (restaurant.city) {
       const { data: cityRows } = await supabase
         .from("restaurants")
         .select("slug,name,cuisine_type,latitude,longitude")
         .eq("city", restaurant.city)
         .neq("id", restaurant.id)
         .limit(20);
-      const extra = (cityRows ?? []) as Neighbor[];
-      const seen = new Set(rows.map((r) => r.slug));
-      for (const e of extra) {
-        if (rows.length >= 5) break;
-        if (seen.has(e.slug)) continue;
-        let km: number | null = null;
-        if (
+      rows = ((cityRows ?? []) as Neighbor[]).map((r) => ({
+        ...r,
+        km:
           lat != null &&
           lng != null &&
-          e.latitude != null &&
-          e.longitude != null
-        ) {
-          km = haversineKm(lat, lng, e.latitude, e.longitude);
-        }
-        rows.push({ ...e, km });
-        seen.add(e.slug);
+          r.latitude != null &&
+          r.longitude != null
+            ? haversineKm(lat, lng, r.latitude, r.longitude)
+            : null,
+      }));
+    }
+
+    if (rows.length < 5 && lat != null && lng != null) {
+      const { data } = await supabase
+        .from("restaurants")
+        .select("slug,name,cuisine_type,latitude,longitude")
+        .neq("id", restaurant.id)
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .limit(30);
+      const list = (data ?? []) as Neighbor[];
+      const seen = new Set(rows.map((r) => r.slug));
+      const byDistance = list
+        .filter((r) => r.latitude != null && r.longitude != null)
+        .map((r) => ({
+          ...r,
+          km: haversineKm(lat, lng, r.latitude!, r.longitude!),
+        }))
+        .sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
+      for (const candidate of byDistance) {
+        if (rows.length >= 5) break;
+        if (seen.has(candidate.slug)) continue;
+        rows.push(candidate);
+        seen.add(candidate.slug);
       }
     }
 
-    if (rows.length === 0) {
-      rows = list.slice(0, 5).map((r) => ({ ...r, km: null }));
+    if (rows.length > 0) {
+      rows.sort((a, b) => (a.km ?? 9999) - (b.km ?? 9999));
     }
 
     rows = rows.slice(0, 5);

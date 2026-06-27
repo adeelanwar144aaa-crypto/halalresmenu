@@ -6,6 +6,9 @@ import { HomeHeroSearch } from "@/components/home/HomeHeroSearch";
 import { LatestRestaurants } from "@/components/home/LatestRestaurants";
 import { getSupabaseServer } from "@/lib/supabase";
 
+/** Keep in sync with `CACHE_TTL.HOME_AND_CITY` in lib/cache-config.ts */
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title:
     "HalalResMenu | Find Halal Restaurants, Menus & Prayer Times Near You",
