@@ -130,3 +130,66 @@ export async function restaurantSlugExistsViaRest(
   const result = await checkRestaurantSlugViaRest(slug);
   return result === "exists";
 }
+
+type CityCacheEntry = { city: string | null; expiresAt: number };
+
+const restaurantCityCache = new Map<string, CityCacheEntry>();
+const CITY_CACHE_MAX = 2000;
+const CITY_CACHE_MS = 60 * 60 * 1000;
+
+function getCachedRestaurantCity(slug: string): string | null | undefined {
+  const hit = restaurantCityCache.get(slug);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expiresAt) {
+    restaurantCityCache.delete(slug);
+    return undefined;
+  }
+  return hit.city;
+}
+
+function setCachedRestaurantCity(slug: string, city: string | null): void {
+  if (restaurantCityCache.size >= CITY_CACHE_MAX) {
+    const firstKey = restaurantCityCache.keys().next().value;
+    if (firstKey) restaurantCityCache.delete(firstKey);
+  }
+  restaurantCityCache.set(slug, {
+    city,
+    expiresAt: Date.now() + CITY_CACHE_MS,
+  });
+}
+
+/** Fetch restaurant city for middleware legacy redirects. */
+export async function fetchRestaurantCityViaRest(
+  slug: string
+): Promise<string | null> {
+  const normalized = slug.trim().toLowerCase();
+  const cached = getCachedRestaurantCity(normalized);
+  if (cached !== undefined) return cached;
+
+  const base = normalizeSupabaseRestBase();
+  const key = trimEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  if (!base || !key || key.length < 20) return null;
+
+  const url = `${base}/rest/v1/restaurants?select=city&slug=eq.${encodeURIComponent(normalized)}&limit=1`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as Array<{ city?: string | null }>;
+    const city = data[0]?.city?.trim() || null;
+    setCachedRestaurantCity(normalized, city);
+    return city;
+  } catch {
+    return null;
+  }
+}

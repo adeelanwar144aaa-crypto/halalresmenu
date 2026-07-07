@@ -1,5 +1,16 @@
 import { FEATURED_CITIES } from "@/lib/featured-cities";
 
+/** Slug variants that resolve to one canonical city hub URL. */
+export const CITY_SLUG_ALIASES: Record<string, string> = {
+  "stoke-on-trent": "stoke",
+};
+
+/** Normalize a city slug to the canonical hub slug. */
+export function resolveCanonicalCitySlug(citySlug: string): string {
+  const normalized = citySlug.toLowerCase().trim();
+  return CITY_SLUG_ALIASES[normalized] ?? normalized;
+}
+
 /** URL-safe slug from a city name, e.g. "City of Westminster" → "city-of-westminster". */
 export function slugifyCity(cityName: string): string {
   return cityName
@@ -29,9 +40,9 @@ export function cityDisplayName(citySlug: string): string {
 }
 
 export function cityHubPath(citySlug: string): string {
-  return `/city/${citySlug.toLowerCase()}`;
+  return `/city/${resolveCanonicalCitySlug(citySlug)}`;
 }
 
 export function cityAllPath(citySlug: string): string {
-  return `/city/${citySlug.toLowerCase()}/all`;
+  return `/city/${resolveCanonicalCitySlug(citySlug)}/all`;
 }

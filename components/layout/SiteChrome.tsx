@@ -4,7 +4,7 @@ import {
   type FooterRestaurantCity,
 } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { cityDisplayName, slugifyCity } from "@/lib/city-slug";
+import { cityDisplayName, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
 import { isRestaurantPathname } from "@/lib/restaurant-route";
 import { fetchRestaurantCityBySlug } from "@/lib/supabase";
 
@@ -14,7 +14,7 @@ async function resolveFooterRestaurantCity(
   const cityRaw = await fetchRestaurantCityBySlug(slug);
   if (!cityRaw) return null;
 
-  const citySlug = slugifyCity(cityRaw);
+  const citySlug = resolveCanonicalCitySlug(slugifyCity(cityRaw));
   if (!citySlug) return null;
 
   return {

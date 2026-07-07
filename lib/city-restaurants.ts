@@ -1,4 +1,4 @@
-import { citySlugToPattern, slugifyCity } from "@/lib/city-slug";
+import { citySlugToPattern, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { getSupabaseServer } from "@/lib/supabase";
@@ -33,7 +33,7 @@ export async function fetchCityRestaurants(
 ): Promise<CityRestaurantsResult> {
   const limit = options.limit ?? CITY_PAGE_SIZE;
   const offset = options.offset ?? 0;
-  const pattern = citySlugToPattern(citySlug);
+  const pattern = citySlugToPattern(resolveCanonicalCitySlug(citySlug));
 
   const supabase = getSupabaseServer();
   if (!supabase) throw new SupabaseUnavailableError();
@@ -70,7 +70,7 @@ export async function fetchCityRestaurants(
 export async function fetchAllCityRestaurants(
   citySlug: string
 ): Promise<CityRestaurant[]> {
-  const pattern = citySlugToPattern(citySlug);
+  const pattern = citySlugToPattern(resolveCanonicalCitySlug(citySlug));
   const supabase = getSupabaseServer();
   if (!supabase) throw new SupabaseUnavailableError();
 
@@ -126,12 +126,15 @@ export async function fetchCitiesWithCounts(): Promise<CityWithCount[]> {
     for (const row of data) {
       const name = String(row.city ?? "").trim();
       if (!name) continue;
-      const slug = slugifyCity(name);
+      const slug = resolveCanonicalCitySlug(slugifyCity(name));
       if (!slug) continue;
 
       const existing = bySlug.get(slug);
       if (existing) {
         existing.count += 1;
+        if (name.length > existing.name.length) {
+          existing.name = name;
+        }
       } else {
         bySlug.set(slug, { name, count: 1 });
       }

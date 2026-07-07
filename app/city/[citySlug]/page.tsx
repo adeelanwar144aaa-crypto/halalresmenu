@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CityLoadMore } from "@/components/city/CityLoadMore";
 import { CityRestaurantList } from "@/components/city/CityRestaurantList";
 import {
   cityAllPath,
   cityDisplayName,
   cityHubPath,
+  resolveCanonicalCitySlug,
 } from "@/lib/city-slug";
 import {
   CITY_PAGE_SIZE,
@@ -47,8 +48,13 @@ export default async function CityHubPage({ params }: PageProps) {
   const normalized = citySlug.toLowerCase().trim();
   if (!normalized) notFound();
 
-  const cityName = cityDisplayName(normalized);
-  const { restaurants, total } = await fetchCityRestaurants(normalized, {
+  const canonical = resolveCanonicalCitySlug(normalized);
+  if (canonical !== normalized) {
+    redirect(cityHubPath(canonical));
+  }
+
+  const cityName = cityDisplayName(canonical);
+  const { restaurants, total } = await fetchCityRestaurants(canonical, {
     limit: CITY_PAGE_SIZE,
     offset: 0,
   });
@@ -75,7 +81,7 @@ export default async function CityHubPage({ params }: PageProps) {
       </p>
       <p className="mt-3 text-sm text-zinc-500">
         <Link
-          href={cityAllPath(normalized)}
+          href={cityAllPath(canonical)}
           className="font-semibold text-halal-700 underline decoration-halal-200 underline-offset-2 hover:text-halal-900"
         >
           View complete list ({total.toLocaleString()})
@@ -86,7 +92,7 @@ export default async function CityHubPage({ params }: PageProps) {
       <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <CityRestaurantList restaurants={restaurants} />
         <CityLoadMore
-          citySlug={normalized}
+          citySlug={canonical}
           initialOffset={restaurants.length}
           hasMore={hasMore}
         />

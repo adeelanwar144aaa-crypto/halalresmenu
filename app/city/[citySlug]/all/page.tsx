@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CityRestaurantList } from "@/components/city/CityRestaurantList";
 import {
   cityAllPath,
   cityDisplayName,
   cityHubPath,
+  resolveCanonicalCitySlug,
 } from "@/lib/city-slug";
 import { fetchAllCityRestaurants } from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
@@ -43,8 +44,13 @@ export default async function CityAllPage({ params }: PageProps) {
   const normalized = citySlug.toLowerCase().trim();
   if (!normalized) notFound();
 
-  const cityName = cityDisplayName(normalized);
-  const restaurants = await fetchAllCityRestaurants(normalized);
+  const canonical = resolveCanonicalCitySlug(normalized);
+  if (canonical !== normalized) {
+    redirect(cityAllPath(canonical));
+  }
+
+  const cityName = cityDisplayName(canonical);
+  const restaurants = await fetchAllCityRestaurants(canonical);
 
   if (restaurants.length === 0) notFound();
 

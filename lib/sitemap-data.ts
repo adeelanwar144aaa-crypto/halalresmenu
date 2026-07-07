@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { cacheControlHeader, CACHE_TTL } from "@/lib/cache-config";
-import { cityAllPath, cityHubPath, slugifyCity } from "@/lib/city-slug";
+import { cityAllPath, cityHubPath, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
@@ -121,8 +121,11 @@ export async function fetchDistinctCitySlugs(): Promise<
     for (const row of data) {
       const name = String(row.city ?? "").trim();
       if (!name) continue;
-      const slug = slugifyCity(name);
-      if (slug && !bySlug.has(slug)) {
+      const slug = resolveCanonicalCitySlug(slugifyCity(name));
+      if (!slug) continue;
+
+      const existing = bySlug.get(slug);
+      if (!existing || name.length > existing.length) {
         bySlug.set(slug, name);
       }
     }

@@ -36,3 +36,19 @@ export function isRestaurantPathname(pathname: string): boolean {
 
   return !RESERVED_SEGMENTS.has(match[1]);
 }
+
+export type ParsedRestaurantPath = {
+  slug: string;
+  /** Empty string for overview, or `/menu` / `/halal-info`. */
+  suffix: string;
+};
+
+/** Parse `/:slug`, `/:slug/menu`, or `/:slug/halal-info` when not a reserved route. */
+export function parseRestaurantPath(pathname: string): ParsedRestaurantPath | null {
+  const path = pathname.replace(/\/$/, "") || "/";
+  const match = path.match(/^\/([^/]+)(?:\/(menu|halal-info))?$/);
+  if (!match || RESERVED_SEGMENTS.has(match[1])) return null;
+
+  const suffix = match[2] ? `/${match[2]}` : "";
+  return { slug: match[1].toLowerCase(), suffix };
+}
