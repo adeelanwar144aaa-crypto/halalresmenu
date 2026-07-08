@@ -313,6 +313,7 @@ function buildUserPrompt(restaurant, cuisineContext) {
   const dineIn = formatBool(restaurant.dine_in);
   const takeaway = formatBool(restaurant.takeaway);
   const delivery = formatBool(restaurant.delivery);
+  const halalStatus = String(restaurant.halal_status || "unknown").trim();
 
   return `Generate content for this halal restaurant:
 Name: ${name}
@@ -322,6 +323,7 @@ Address: ${address}
 Rating: ${rating}
 Price level: ${priceLevel}
 Dining options: dine-in=${dineIn}, takeaway=${takeaway}, delivery=${delivery}
+Halal status in our database: ${halalStatus}
 Return ONLY this JSON:
 {
   "menu": {
@@ -381,7 +383,10 @@ Rules for SEO:
 - Banned phrases and style: premier, we are committed, our mission is, world-class, elevate, curated experience, utilize, awesome
 - FAQs cover: halal status, opening hours, delivery, parking, booking
 - FAQ answers should also use British English and a helpful local tone
-- Provide exactly 5 FAQs in the faq array`;
+- Provide exactly 5 FAQs in the faq array
+- If halal status is unknown or claimed_halal, do NOT state the restaurant is certified; advise guests to confirm halal sourcing and certification with staff
+- If delivery is unknown, do not claim delivery is available; say to contact the restaurant to confirm
+- Only mention address/area details that match the Address field above; do not invent street names`;
 }
 
 /**
@@ -489,6 +494,134 @@ async function generateContentWithClaude(
   }
 
   return { menuData, seoContent, itemCount };
+}
+
+function buildSeoOnlyUserPrompt(restaurant, cuisineContext) {
+  const name = restaurant.name?.trim() || "Restaurant";
+  const cuisine = cuisineContext.cuisine;
+  const genericOnly = cuisineContext.genericOnly;
+  const city = restaurant.city?.trim() || "UK";
+  const address = restaurant.address?.trim() || "not listed";
+  const rating = formatRating(restaurant.rating);
+  const priceLevel = priceLevelLabel(restaurant);
+  const dineIn = formatBool(restaurant.dine_in);
+  const takeaway = formatBool(restaurant.takeaway);
+  const delivery = formatBool(restaurant.delivery);
+  const halalStatus = String(restaurant.halal_status || "unknown").trim();
+  const menuSummary = (restaurant.menu_data?.categories || [])
+    .slice(0, 6)
+    .map(
+      (c) =>
+        `${c.name}: ${(c.items || [])
+          .slice(0, 4)
+          .map((i) => i.name)
+          .filter(Boolean)
+          .join(", ")}`
+    )
+    .join("; ");
+
+  return `Generate SEO copy only for this halal restaurant (menu already exists — do NOT invent a new menu):
+Name: ${name}
+Cuisine: ${cuisine}
+City: ${city}
+Address: ${address}
+Rating: ${rating}
+Price level: ${priceLevel}
+Dining options: dine-in=${dineIn}, takeaway=${takeaway}, delivery=${delivery}
+Halal status in our database: ${halalStatus}
+Existing menu summary: ${menuSummary || "see cuisine type"}
+Return ONLY this JSON:
+{
+  "seo": {
+    "meta_title": "string (60 chars max)",
+    "meta_description": "string (160 chars max)",
+    "h1": "string",
+    "about_section": "string (300-400 words, authentic UK food blog style; British English; keywords: halal, ${cuisine}, ${city}, restaurant)",
+    "faq": [
+      { "question": "string", "answer": "string" }
+    ]
+  }
+}
+Rules for SEO:
+- Natural keyword placement; include restaurant name in H1
+- British English only (specialise, flavours, centre, favourite)
+- Write like a local UK food blog — conversational, warm, specific to ${city}
+- Mention UK context naturally (high street, town centre, takeaway, dine-in)
+- Do NOT use corporate American marketing tone
+- Banned: premier, we are committed, world-class, elevate, utilize
+- Exactly 5 FAQs: halal status, opening hours, delivery, parking, booking
+- If halal status is unknown or claimed_halal, do NOT claim certification; advise confirming with staff
+- If delivery is unknown, say to contact the restaurant
+- Only mention address/area details matching the Address field
+${
+  genericOnly
+    ? `- Do not claim a specific cuisine specialism beyond general halal dining in ${city}`
+    : ""
+}`;
+}
+
+/**
+ * SEO-only generation when menu_data already exists.
+ */
+async function generateSeoOnlyWithClaude(
+  restaurant,
+  cuisineContext,
+  attempt = 1
+) {
+  const apiKey = getAnthropicApiKey();
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 2500,
+      system:
+        "You are a restaurant SEO copywriter. Return valid JSON only. No markdown, no explanation.",
+      messages: [
+        {
+          role: "user",
+          content: buildSeoOnlyUserPrompt(restaurant, cuisineContext),
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    const overloaded =
+      res.status === 529 ||
+      /overloaded/i.test(body) ||
+      /rate.?limit/i.test(body);
+
+    if (overloaded && attempt < MAX_CLAUDE_RETRIES) {
+      console.log(
+        `  Claude overloaded (HTTP ${res.status}), retry in 30s (${attempt}/${MAX_CLAUDE_RETRIES})…`
+      );
+      await sleep(OVERLOAD_RETRY_MS);
+      return generateSeoOnlyWithClaude(restaurant, cuisineContext, attempt + 1);
+    }
+
+    throw new Error(`Claude HTTP ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const json = await res.json();
+  const text = json.content?.find((b) => b.type === "text")?.text?.trim();
+  if (!text) throw new Error("empty Claude response");
+
+  const parsed = parseJsonFromClaude(text);
+  const seoContent = normalizeSeoPayload(parsed.seo ?? parsed);
+
+  if (!hasSeoContent(seoContent)) {
+    throw new Error("SEO content incomplete (missing h1, about_section, or faq)");
+  }
+
+  const itemCount = countMenuItems(restaurant.menu_data);
+  return { menuData: restaurant.menu_data, seoContent, itemCount };
 }
 
 /**
@@ -761,7 +894,22 @@ async function main() {
   console.log("DONE.");
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+module.exports = {
+  buildUserPrompt,
+  buildSeoOnlyUserPrompt,
+  generateContentWithClaude,
+  generateSeoOnlyWithClaude,
+  hasMenuData,
+  hasSeoContent,
+  resolveRestaurantCuisine,
+  updateCuisineTypeIfNull,
+  countMenuItems,
+  normalizeSeoPayload,
+};
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
