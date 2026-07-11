@@ -5,7 +5,7 @@ import Link from "next/link";
 import { permanentRedirect } from "next/navigation";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
 import { slugifyCity, cityHubPath } from "@/lib/city-slug";
-import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";
+import { resolveRestaurantPhotoCandidates } from "@/lib/restaurant-photos";
 import { getSupabaseServer } from "@/lib/supabase";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
@@ -79,7 +79,9 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </li>
         ) : (
           results.map((r) => {
-            const photoUrl = firstRestaurantPhotoUrl(r.photos);
+            const photoCandidates = resolveRestaurantPhotoCandidates(r.photos, {
+              slug: r.slug,
+            });
 
             return (
               <li key={r.slug}>
@@ -89,7 +91,8 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 >
                   <RestaurantThumbnail
                     name={r.name}
-                    photoUrl={photoUrl}
+                    photoCandidates={photoCandidates}
+                    slug={r.slug}
                     className="h-20 w-20 sm:h-24 sm:w-24"
                     width={96}
                     height={96}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
-import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";
+import { resolveRestaurantPhotoCandidates } from "@/lib/restaurant-photos";
 import type { CityRestaurant, CityRestaurantBrowse } from "@/lib/city-restaurants";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
@@ -9,7 +9,9 @@ export function CityRestaurantCard({
 }: {
   restaurant: CityRestaurant | CityRestaurantBrowse;
 }) {
-  const photoUrl = firstRestaurantPhotoUrl(restaurant.photos);
+  const photoCandidates = resolveRestaurantPhotoCandidates(restaurant.photos, {
+    slug: restaurant.slug,
+  });
   const rating =
     "rating" in restaurant && restaurant.rating != null
       ? Number(restaurant.rating)
@@ -30,7 +32,8 @@ export function CityRestaurantCard({
       >
         <RestaurantThumbnail
           name={restaurant.name}
-          photoUrl={photoUrl}
+          photoCandidates={photoCandidates}
+          slug={restaurant.slug}
           className="h-20 w-20 sm:h-24 sm:w-24"
           width={96}
           height={96}

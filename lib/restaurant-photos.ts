@@ -83,3 +83,93 @@ export function firstRestaurantPhotoUrl(
 ): string | null {
   return resolveRestaurantGalleryUrls(jsonbPhotos, tablePhotos)[0] ?? null;
 }
+
+/** Alternate public URL shapes for Supabase storage objects. */
+export function restaurantPhotoUrlVariants(
+  url: string,
+  slug?: string
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (candidate: string | null | undefined) => {
+    const trimmed = candidate?.trim();
+    if (!trimmed || !isHttpUrl(trimmed) || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    out.push(trimmed);
+  };
+
+  add(url);
+
+  if (url.includes("/restaurant-photos/restaurant-photos/")) {
+    add(
+      url.replace(
+        "/restaurant-photos/restaurant-photos/",
+        "/restaurant-photos/"
+      )
+    );
+  } else if (
+    url.includes("/storage/v1/object/public/restaurant-photos/") &&
+    !url.includes("/restaurant-photos/restaurant-photos/")
+  ) {
+    add(
+      url.replace(
+        "/storage/v1/object/public/restaurant-photos/",
+        "/storage/v1/object/public/restaurant-photos/restaurant-photos/"
+      )
+    );
+  }
+
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  if (base && slug) {
+    for (let i = 1; i <= 3; i++) {
+      add(
+        `${base}/storage/v1/object/public/restaurant-photos/restaurant-photos/${slug}/photo-${i}.jpg`
+      );
+      add(
+        `${base}/storage/v1/object/public/restaurant-photos/${slug}/photo-${i}.jpg`
+      );
+    }
+  }
+
+  return out;
+}
+
+export function resolveRestaurantPhotoCandidates(
+  jsonbPhotos: unknown,
+  options: {
+    slug?: string;
+    logoUrl?: string | null;
+    tablePhotos?: RestaurantPhoto[];
+  } = {}
+): string[] {
+  const gallery = resolveRestaurantGalleryUrls(
+    jsonbPhotos,
+    options.tablePhotos ?? []
+  );
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const url of gallery) {
+    for (const variant of restaurantPhotoUrlVariants(url, options.slug)) {
+      if (seen.has(variant)) continue;
+      seen.add(variant);
+      out.push(variant);
+    }
+  }
+
+  if (!gallery.length && options.slug) {
+    for (const variant of restaurantPhotoUrlVariants("", options.slug)) {
+      if (seen.has(variant)) continue;
+      seen.add(variant);
+      out.push(variant);
+    }
+  }
+
+  const logo = options.logoUrl?.trim();
+  if (logo && isHttpUrl(logo) && !seen.has(logo)) {
+    out.push(logo);
+  }
+
+  return out;
+}
