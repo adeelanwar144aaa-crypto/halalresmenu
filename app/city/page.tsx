@@ -13,9 +13,10 @@ export const revalidate = 3600;
 const canonical = `${getApexOrigin()}/city`;
 
 export const metadata: Metadata = {
-  title: "Halal Restaurants by City | Browse All UK Cities | HalalResMenu",
+  title:
+    "Halal Restaurants by City Near Me | Browse UK Cities & Towns (Updated 2026)",
   description:
-    "Browse halal restaurant guides for cities across the UK. View menus, certification details, and neighbourhood dining on HalalResMenu.",
+    "Find halal restaurants near you across UK cities and towns. Browse local menus, cuisines, takeaway, and trusted halal dining by city on HalalResMenu.",
   alternates: { canonical },
   openGraph: {
     title: "Halal Restaurants by City | HalalResMenu",
@@ -40,13 +41,17 @@ export default async function CitiesIndexPage() {
       </Link>
 
       <h1 className="mt-6 font-serif text-3xl font-bold text-zinc-900 sm:text-4xl">
-        Halal Restaurants by City
+        Halal Restaurants by City — Near Me Across the UK
       </h1>
       <p className="mt-4 max-w-3xl text-lg leading-relaxed text-zinc-600">
-        Explore halal dining guides for cities and towns across the UK. Each
-        city page lists certified restaurants with full menus, prayer-aware
-        context, and the neighbourhood detail you expect from a trusted halal
-        guide.
+        Find halal restaurants near you in cities and towns across the United
+        Kingdom. Browse local menus, popular cuisines, takeaway and delivery
+        options, and trusted halal dining guides for every community we cover.
+      </p>
+      <p className="mt-3 max-w-3xl leading-relaxed text-zinc-500">
+        Whether you search for halal food near me in London, Birmingham,
+        Manchester, Bradford, Leicester, or smaller towns nearby, start with your
+        city below.
       </p>
 
       {cities.length === 0 ? (

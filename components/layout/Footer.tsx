@@ -55,7 +55,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-halal-300/90">
         {title}
       </h2>
       {children}
@@ -70,7 +70,7 @@ function FooterLinkList({ links }: { links: { href: string; label: string }[] })
         <li key={`${link.href}-${link.label}`}>
           <Link
             href={apexPath(link.href)}
-            className="font-normal text-zinc-600 no-underline transition hover:font-medium hover:text-zinc-900"
+            className="font-normal text-halal-100/90 no-underline transition hover:font-medium hover:text-white"
           >
             {link.label}
           </Link>
@@ -110,21 +110,21 @@ export function Footer({
   const exploreLinks = buildExploreLinks(restaurantCity);
 
   return (
-    <footer className="mt-auto border-t border-zinc-200/80 bg-zinc-50">
+    <footer className="mt-auto border-t border-halal-800 bg-gradient-to-b from-halal-900 via-halal-950 to-halal-950 text-white">
       <div className="mx-auto max-w-7xl px-5 pb-8 pt-10 sm:px-6 md:px-8 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr] lg:gap-12">
           <div className="md:col-span-2 lg:col-span-1">
             <Link
               href={apexPath("/")}
-              className="text-lg font-bold tracking-tight text-halal-900 no-underline transition hover:text-halal-700"
+              className="text-lg font-bold tracking-tight text-white no-underline transition hover:text-halal-200"
             >
-              Halal<span className="text-halal-600">Res</span>Menu
+              Halal<span className="text-halal-300">Res</span>Menu
             </Link>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-600">
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-halal-100/85">
               The UK halal dining guide — menus, certification context, and
               neighbourhood detail you can trust.
             </p>
-            <p className="mt-4 text-sm font-medium text-zinc-700">
+            <p className="mt-4 text-sm font-medium text-halal-200/90">
               © {year} HalalResMenu
             </p>
           </div>
@@ -143,14 +143,14 @@ export function Footer({
         </div>
 
         <div
-          className="my-8 h-px w-full bg-zinc-200/90"
+          className="my-8 h-px w-full bg-halal-800/80"
           role="separator"
           aria-hidden
         />
 
-        <div className="flex w-full gap-3 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-4 sm:gap-4 sm:px-5 sm:py-5">
-          <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-          <p className="text-sm font-semibold leading-relaxed text-amber-950">
+        <div className="flex w-full gap-3 rounded-lg border-l-4 border-amber-400 bg-halal-900/60 px-4 py-4 ring-1 ring-halal-800 sm:gap-4 sm:px-5 sm:py-5">
+          <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+          <p className="text-sm font-semibold leading-relaxed text-halal-50">
             Information may change. Always confirm halal status and allergens
             directly with the restaurant before you visit or order.
           </p>

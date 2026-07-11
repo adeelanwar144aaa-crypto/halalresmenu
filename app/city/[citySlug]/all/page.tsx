@@ -8,7 +8,15 @@ import {
   cityHubPath,
   resolveCanonicalCitySlug,
 } from "@/lib/city-slug";
-import { fetchAllCityRestaurants } from "@/lib/city-restaurants";
+import {
+  buildCityAllMetaDescription,
+  buildCityAllMetaTitle,
+  buildCitySeoContext,
+} from "@/lib/city-seo";
+import {
+  fetchAllCityRestaurants,
+  fetchCitySeoStats,
+} from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
 
 export const runtime = "edge";
@@ -22,16 +30,34 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { citySlug } = await params;
-  const name = cityDisplayName(citySlug);
-  const canonical = `${getApexOrigin()}${cityAllPath(citySlug)}`;
+  const canonicalSlug = resolveCanonicalCitySlug(citySlug);
+  const name = cityDisplayName(canonicalSlug);
+  const canonical = `${getApexOrigin()}${cityAllPath(canonicalSlug)}`;
+  const title = buildCityAllMetaTitle(name);
+
+  let description = `Complete directory of halal restaurants in ${name}. Every listing links to its subdomain with menu, reviews, and halal certification.`;
+
+  try {
+    const stats = await fetchCitySeoStats(canonicalSlug, name);
+    const ctx = buildCitySeoContext({
+      citySlug: canonicalSlug,
+      cityName: name,
+      total: stats.total,
+      cuisineCounts: stats.cuisineCounts,
+      areaCounts: stats.areaCounts,
+    });
+    description = buildCityAllMetaDescription(ctx);
+  } catch {
+    // fallback above
+  }
 
   return {
-    title: `All Halal Restaurants in ${name} | HalalResMenu`,
-    description: `Complete directory of halal restaurants in ${name}. Every listing links to its subdomain with menu, reviews, and halal certification.`,
+    title,
+    description,
     alternates: { canonical },
     openGraph: {
-      title: `All Halal Restaurants in ${name}`,
-      description: `Complete halal restaurant directory for ${name}.`,
+      title,
+      description,
       url: canonical,
       siteName: "HalalResMenu",
       type: "website",
@@ -63,12 +89,12 @@ export default async function CityAllPage({ params }: PageProps) {
         ← Back to {cityName} hub
       </Link>
       <h1 className="mt-6 font-serif text-3xl font-bold text-zinc-900">
-        All halal restaurants in {cityName}
+        All halal restaurants in {cityName} — full directory
       </h1>
       <p className="mt-2 text-zinc-600">
-        Complete list of {restaurants.length.toLocaleString()} restaurant
-        {restaurants.length === 1 ? "" : "s"} — every link goes to the
-        restaurant&apos;s subdomain.
+        Complete list of {restaurants.length.toLocaleString()} halal restaurant
+        {restaurants.length === 1 ? "" : "s"} in {cityName} and nearby listings.
+        Compare cuisines, menus, and local halal food options near you.
       </p>
 
       <ul className="mt-10 space-y-4">

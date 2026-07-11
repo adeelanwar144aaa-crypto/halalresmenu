@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CityLoadMore } from "@/components/city/CityLoadMore";
+import { CityPageHero } from "@/components/city/CityPageHero";
+import { CityPageSeoContent } from "@/components/city/CityPageSeoContent";
 import { CityRestaurantList } from "@/components/city/CityRestaurantList";
 import {
   cityAllPath,
@@ -10,8 +12,14 @@ import {
   resolveCanonicalCitySlug,
 } from "@/lib/city-slug";
 import {
+  buildCityMetaDescription,
+  buildCityMetaTitle,
+  buildCitySeoContext,
+} from "@/lib/city-seo";
+import {
   CITY_PAGE_SIZE,
   fetchCityRestaurants,
+  fetchCitySeoStats,
 } from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
 
@@ -26,16 +34,35 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { citySlug } = await params;
-  const name = cityDisplayName(citySlug);
-  const canonical = `${getApexOrigin()}${cityHubPath(citySlug)}`;
+  const canonicalSlug = resolveCanonicalCitySlug(citySlug);
+  const name = cityDisplayName(canonicalSlug);
+  const canonical = `${getApexOrigin()}${cityHubPath(canonicalSlug)}`;
+
+  let description = `Browse halal restaurants in ${name}. View menus, reviews, certification details, and local halal dining near you on HalalResMenu.`;
+
+  try {
+    const stats = await fetchCitySeoStats(canonicalSlug, name);
+    const ctx = buildCitySeoContext({
+      citySlug: canonicalSlug,
+      cityName: name,
+      total: stats.total,
+      cuisineCounts: stats.cuisineCounts,
+      areaCounts: stats.areaCounts,
+    });
+    description = buildCityMetaDescription(ctx);
+  } catch {
+    // Fallback description above
+  }
+
+  const title = buildCityMetaTitle(name);
 
   return {
-    title: `Halal Restaurants in ${name} | HalalResMenu`,
-    description: `Browse halal restaurants in ${name}. View menus, reviews, certification details, and prayer-aware dining info on HalalResMenu.`,
+    title,
+    description,
     alternates: { canonical },
     openGraph: {
-      title: `Halal Restaurants in ${name}`,
-      description: `Browse halal restaurants in ${name} on HalalResMenu.`,
+      title,
+      description,
       url: canonical,
       siteName: "HalalResMenu",
       type: "website",
@@ -54,49 +81,66 @@ export default async function CityHubPage({ params }: PageProps) {
   }
 
   const cityName = cityDisplayName(canonical);
-  const { restaurants, total } = await fetchCityRestaurants(canonical, {
-    limit: CITY_PAGE_SIZE,
-    offset: 0,
-  });
+  const [{ restaurants, total }, seoStats] = await Promise.all([
+    fetchCityRestaurants(canonical, { limit: CITY_PAGE_SIZE, offset: 0 }),
+    fetchCitySeoStats(canonical, cityName),
+  ]);
 
   if (total === 0) notFound();
+
+  const seoContext = buildCitySeoContext({
+    citySlug: canonical,
+    cityName,
+    total,
+    cuisineCounts: seoStats.cuisineCounts,
+    areaCounts: seoStats.areaCounts,
+  });
 
   const hasMore = total > CITY_PAGE_SIZE;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <Link
-        href="/"
-        className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
-      >
-        ← Back to home
-      </Link>
-      <h1 className="mt-6 font-serif text-3xl font-bold text-zinc-900">
-        Halal restaurants in {cityName}
-      </h1>
-      <p className="mt-2 text-zinc-600">
-        {total.toLocaleString()} restaurant{total === 1 ? "" : "s"} in{" "}
-        {cityName}. Each listing opens on its own subdomain with full menu and
-        halal details.
-      </p>
-      <p className="mt-3 text-sm text-zinc-500">
-        <Link
-          href={cityAllPath(canonical)}
-          className="font-semibold text-halal-700 underline decoration-halal-200 underline-offset-2 hover:text-halal-900"
-        >
-          View complete list ({total.toLocaleString()})
-        </Link>{" "}
-        — full directory for this city.
-      </p>
+    <div>
+      <CityPageHero cityName={cityName} citySlug={canonical} total={total} />
 
-      <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <CityRestaurantList restaurants={restaurants} />
-        <CityLoadMore
-          citySlug={canonical}
-          initialOffset={restaurants.length}
-          hasMore={hasMore}
-        />
-      </ul>
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <Link
+          href="/city"
+          className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
+        >
+          ← All cities
+        </Link>
+
+        <CityPageSeoContent ctx={seoContext} />
+
+        <section className="mt-14 border-t border-zinc-200/80 pt-12">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-zinc-900 sm:text-3xl">
+                Halal restaurants in {cityName}
+              </h2>
+              <p className="mt-2 text-zinc-600">
+                {total.toLocaleString()} listing{total === 1 ? "" : "s"} — each
+                opens on its own page with menu and halal details.
+              </p>
+            </div>
+            <Link
+              href={cityAllPath(canonical)}
+              className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
+            >
+              View complete list →
+            </Link>
+          </div>
+
+          <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <CityRestaurantList restaurants={restaurants} />
+            <CityLoadMore
+              citySlug={canonical}
+              initialOffset={restaurants.length}
+              hasMore={hasMore}
+            />
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }

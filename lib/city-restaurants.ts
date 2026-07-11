@@ -1,3 +1,4 @@
+import { extractLocalAreaFromAddress } from "@/lib/city-seo";
 import { citySlugToPattern, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
@@ -98,6 +99,92 @@ export async function fetchAllCityRestaurants(
   }
 
   return rows;
+}
+
+export type CitySeoStats = {
+  total: number;
+  cuisineCounts: Map<string, number>;
+  areaCounts: Map<string, number>;
+};
+
+function tallyCuisine(map: Map<string, number>, value: string | null) {
+  const name = String(value ?? "").trim();
+  if (!name || name.length < 2) return;
+  const key = name.replace(/\s+/g, " ");
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function tallyArea(map: Map<string, number>, value: string | null) {
+  const name = String(value ?? "").trim();
+  if (!name || name.length < 2) return;
+  const key = name.replace(/\s+/g, " ");
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+/** Aggregate cuisines and local area labels for city SEO copy. */
+export async function fetchCitySeoStats(
+  citySlug: string,
+  cityName: string
+): Promise<CitySeoStats> {
+  const pattern = citySlugToPattern(resolveCanonicalCitySlug(citySlug));
+  const supabase = getSupabaseServer();
+  if (!supabase) throw new SupabaseUnavailableError();
+
+  const cuisineCounts = new Map<string, number>();
+  const areaCounts = new Map<string, number>();
+  let offset = 0;
+  const pageSize = 1000;
+  let total = 0;
+
+  const { count, error: countError } = await supabase
+    .from("restaurants")
+    .select("*", { count: "exact", head: true })
+    .ilike("city", pattern);
+
+  if (countError) {
+    throwIfSupabaseUnavailable(countError, "city seo count");
+    throw countError;
+  }
+
+  total = count ?? 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("cuisine_type,city,address")
+      .ilike("city", pattern)
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throwIfSupabaseUnavailable(error, "city seo stats");
+      throw error;
+    }
+
+    if (!data?.length) break;
+
+    for (const row of data) {
+      tallyCuisine(cuisineCounts, row.cuisine_type);
+
+      const cityLabel = String(row.city ?? "").trim();
+      if (
+        cityLabel &&
+        cityLabel.toLowerCase() !== cityName.toLowerCase()
+      ) {
+        tallyArea(areaCounts, cityLabel);
+      }
+
+      const area = extractLocalAreaFromAddress(
+        String(row.address ?? ""),
+        cityName
+      );
+      if (area) tallyArea(areaCounts, area);
+    }
+
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return { total, cuisineCounts, areaCounts };
 }
 
 /** Distinct cities with published restaurant counts, largest first. */
