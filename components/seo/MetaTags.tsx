@@ -64,19 +64,19 @@ function buildTitleAndDescription(input: PageMetaInput): {
     case "menu":
       if (name && city) {
         return {
-          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updates 2026`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updated 2026`,
           description: `View the full halal menu and prices at ${name} in ${city}. Browse all dishes, categories and updated prices for 2026.`,
         };
       }
       if (name) {
         return {
-          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updates 2026`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updated 2026`,
           description:
             "Browse the full halal menu with updated 2026 prices on HalalResMenu.",
         };
       }
       return {
-        title: "Restaurant Menu With Prices Updates 2026",
+        title: "Restaurant Menu With Prices Updated 2026",
         description:
           "Browse the full halal menu with updated 2026 prices on HalalResMenu.",
       };
