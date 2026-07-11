@@ -14,8 +14,6 @@ import {
   HomeStartExploring,
   HomeWhyChoose,
 } from "@/components/home/HomePageSections";
-import { LatestRestaurants } from "@/components/home/LatestRestaurants";
-import { getSupabaseServer } from "@/lib/supabase";
 
 /** Keep in sync with `CACHE_TTL.HOME_AND_CITY` in lib/cache-config.ts */
 export const revalidate = 3600;
@@ -27,27 +25,7 @@ export const metadata: Metadata = {
     "Find halal restaurants near you across the UK. Browse menus, opening hours, delivery options, and trusted dining information on HalalResMenu.",
 };
 
-export default async function HomePage() {
-  const supabase = getSupabaseServer();
-  let latest: {
-    slug: string;
-    name: string;
-    city: string | null;
-    cuisine_type: string | null;
-    logo_url: string | null;
-    photos: unknown;
-    created_at: string;
-  }[] = [];
-
-  if (supabase) {
-    const { data } = await supabase
-      .from("restaurants")
-      .select("slug,name,city,cuisine_type,logo_url,photos,created_at")
-      .order("created_at", { ascending: false })
-      .limit(12);
-    latest = (data ?? []) as typeof latest;
-  }
-
+export default function HomePage() {
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-to-b from-halal-950 via-halal-900 to-halal-800 text-white">
@@ -80,13 +58,6 @@ export default async function HomePage() {
             >
               Explore featured cities
             </Link>
-            <span className="mx-2 text-halal-600">·</span>
-            <Link
-              href="#latest"
-              className="font-medium underline decoration-halal-400/50 underline-offset-4 transition hover:text-white"
-            >
-              See what&apos;s new
-            </Link>
           </p>
         </div>
       </section>
@@ -102,9 +73,6 @@ export default async function HomePage() {
       <HomeRestaurantOwners />
       <HomeWhyChoose />
       <HomeStartExploring />
-      <div id="latest">
-        <LatestRestaurants items={latest} />
-      </div>
     </>
   );
 }

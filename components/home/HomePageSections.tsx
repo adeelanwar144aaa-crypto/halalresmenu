@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { MENU_HIGHLIGHTS, MenuCategoryIcon } from "@/components/home/MenuCategoryIcon";
 
 function SectionEyebrow({ children }: { children: ReactNode }) {
   return (
@@ -24,24 +25,6 @@ function SectionLead({ children }: { children: ReactNode }) {
     </p>
   );
 }
-
-const MENU_HIGHLIGHTS = [
-  "Main meals",
-  "Burgers",
-  "Pizza",
-  "Fried chicken",
-  "Kebabs",
-  "Pakistani cuisine",
-  "Indian cuisine",
-  "Turkish cuisine",
-  "Middle Eastern food",
-  "Chinese dishes",
-  "Desserts",
-  "Drinks",
-  "Vegetarian options",
-  "Family meals",
-  "Meal deals",
-];
 
 const DINING_DETAILS = [
   "Restaurant menus",
@@ -294,10 +277,13 @@ export function HomeBrowseMenus() {
         <div className="mt-12 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {MENU_HIGHLIGHTS.map((item) => (
             <div
-              key={item}
-              className="rounded-xl border border-zinc-200/80 bg-zinc-50 px-4 py-3.5 text-sm font-medium text-zinc-800 transition hover:border-halal-200 hover:bg-halal-50/60 hover:text-halal-900"
+              key={item.label}
+              className="group flex flex-col items-center gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50 px-3 py-4 text-center text-sm font-medium text-zinc-800 transition hover:border-halal-200 hover:bg-halal-50/60 hover:text-halal-900"
             >
-              {item}
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-halal-100 text-halal-700 transition group-hover:bg-halal-200">
+                <MenuCategoryIcon id={item.icon} />
+              </div>
+              <span className="leading-snug">{item.label}</span>
             </div>
           ))}
         </div>

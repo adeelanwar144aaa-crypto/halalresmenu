@@ -1,6 +1,15 @@
+import cityPexelsImages from "./city-pexels-images.json";
+
+export type CityPexelsImage = {
+  url: string;
+  photographer: string;
+  photographerUrl: string;
+  pexelsUrl: string;
+};
+
 /**
  * City slug → background image path (under /public).
- * Swap paths here when final photography is ready.
+ * Local paths are kept for optional self-hosted overrides.
  */
 export const CITY_IMAGES: Record<string, string> = {
   london: "/images/cities/london.jpg",
@@ -52,6 +61,19 @@ export const CITY_IMAGES: Record<string, string> = {
 
 export const DEFAULT_CITY_IMAGE = "/images/cities/default.svg";
 
+const pexelsManifest = cityPexelsImages as Record<string, CityPexelsImage>;
+
+export function getCityPexelsImage(slug: string): CityPexelsImage | null {
+  return pexelsManifest[slug.toLowerCase().trim()] ?? null;
+}
+
 export function getCityImagePath(slug: string): string {
-  return CITY_IMAGES[slug.toLowerCase().trim()] ?? DEFAULT_CITY_IMAGE;
+  const key = slug.toLowerCase().trim();
+  const pexels = pexelsManifest[key]?.url;
+  if (pexels) return pexels;
+  return CITY_IMAGES[key] ?? DEFAULT_CITY_IMAGE;
+}
+
+export function isRemoteCityImage(src: string): boolean {
+  return src.startsWith("http://") || src.startsWith("https://");
 }
