@@ -8,15 +8,15 @@ export function FeaturedCities() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-halal-700">
-            Explore by city
+            Across the UK
           </p>
           <h2 className="mt-3 font-serif text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-            Featured UK cities
+            Explore Restaurants Across the United Kingdom
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-zinc-600">
-            Start where Muslim communities have built thriving halal food
-            cultures — from Bradford&apos;s curry heritage to Leicester&apos;s
-            Golden Mile.
+            Our directory includes halal restaurants from cities, towns, and
+            local communities throughout the UK — from London and Birmingham to
+            Glasgow, Cardiff, and beyond.
           </p>
         </div>
 

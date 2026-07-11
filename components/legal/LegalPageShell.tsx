@@ -24,7 +24,7 @@ export function LegalPageShell({
       {description ? (
         <p className="mt-4 text-lg leading-relaxed text-zinc-600">{description}</p>
       ) : null}
-      <div className="mt-10 space-y-10 text-zinc-600 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-zinc-900 [&_p]:mt-3 [&_p]:leading-relaxed [&_section+section]:border-t [&_section+section]:border-zinc-100 [&_section+section]:pt-10">
+      <div className="mt-10 space-y-10 text-zinc-600 [&_a]:font-medium [&_a]:text-halal-700 [&_a]:underline [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-zinc-900 [&_h3]:mt-6 [&_h3]:font-semibold [&_h3]:text-zinc-900 [&_li]:leading-relaxed [&_p]:mt-3 [&_p]:leading-relaxed [&_section+section]:border-t [&_section+section]:border-zinc-100 [&_section+section]:pt-10 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
         {children}
       </div>
     </div>

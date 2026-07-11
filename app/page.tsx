@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EditorialIntro } from "@/components/home/EditorialIntro";
 import { FeaturedCities } from "@/components/home/FeaturedCities";
 import { HomeHeroSearch } from "@/components/home/HomeHeroSearch";
+import {
+  HomeBrowseMenus,
+  HomeCompareChoose,
+  HomeDiningDetails,
+  HomeFindNearby,
+  HomeIntroBand,
+  HomeMoreCities,
+  HomePopularCuisines,
+  HomeRestaurantOwners,
+  HomeStartExploring,
+  HomeWhyChoose,
+} from "@/components/home/HomePageSections";
 import { LatestRestaurants } from "@/components/home/LatestRestaurants";
 import { getSupabaseServer } from "@/lib/supabase";
 
@@ -11,9 +22,9 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title:
-    "HalalResMenu | Find Halal Restaurants, Menus & Prayer Times Near You",
+    "Discover Halal Restaurants Across the UK | Menus, Reviews & Locations",
   description:
-    "Browse halal-certified restaurants, full menus, prayer times, and mosque locations across the UK. Find your nearest halal restaurant on HalalResMenu.",
+    "Find halal restaurants near you across the UK. Browse menus, opening hours, delivery options, and trusted dining information on HalalResMenu.",
 };
 
 export default async function HomePage() {
@@ -50,14 +61,16 @@ export default async function HomePage() {
         />
         <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-16 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pb-32 lg:pt-24">
           <p className="text-center text-sm font-semibold uppercase tracking-[0.25em] text-halal-200">
-            The UK halal dining guide
+            HalalResMenu · United Kingdom
           </p>
           <h1 className="mx-auto mt-6 max-w-4xl text-center font-serif text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-            Where to eat halal — with the detail a good guide deserves
+            Discover Halal Restaurants Across the UK
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-relaxed text-halal-100/90">
-            Certification, menus, prayer times, and neighbourhood context for
-            restaurants across Britain&apos;s Muslim communities.
+          <p className="mx-auto mt-6 max-w-3xl text-center text-lg leading-relaxed text-halal-100/90">
+            Looking for the best halal restaurant near you? Welcome to
+            HalalResMenu, your trusted destination for finding halal
+            restaurants, browsing restaurant menus, checking opening times, and
+            discovering places to eat across the United Kingdom.
           </p>
           <HomeHeroSearch />
           <p className="mt-8 text-center text-sm text-halal-200/80">
@@ -78,8 +91,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <EditorialIntro />
+      <HomeIntroBand />
+      <HomeFindNearby />
+      <HomeBrowseMenus />
+      <HomeDiningDetails />
+      <HomePopularCuisines />
       <FeaturedCities />
+      <HomeMoreCities />
+      <HomeCompareChoose />
+      <HomeRestaurantOwners />
+      <HomeWhyChoose />
+      <HomeStartExploring />
       <div id="latest">
         <LatestRestaurants items={latest} />
       </div>
