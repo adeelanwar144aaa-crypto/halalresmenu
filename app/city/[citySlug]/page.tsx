@@ -96,7 +96,7 @@ export default async function CityHubPage({ params }: PageProps) {
 
 
   return (
-    <div>
+    <div className="bg-gradient-to-b from-halal-50/30 via-zinc-50 to-zinc-50">
       <CityPageHero cityName={cityName} citySlug={canonical} total={total} />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -109,12 +109,15 @@ export default async function CityHubPage({ params }: PageProps) {
 
         <CityPageSeoContent ctx={seoContext} />
 
-        <section className="mt-14 border-t border-zinc-200/80 pt-12">
+        <section className="mt-14 rounded-3xl border border-halal-100 bg-white/80 px-5 py-10 shadow-[0_8px_40px_-20px_rgb(26_122_74_/_0.2)] backdrop-blur-sm sm:px-8">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-zinc-900 sm:text-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-halal-600">
+              Browse & filter
+            </p>
+            <h2 className="mt-2 font-serif text-2xl font-bold text-halal-950 sm:text-3xl">
               Halal restaurants in {cityName}
             </h2>
-            <p className="mt-2 text-zinc-600">
+            <p className="mt-2 text-halal-800/80">
               {total.toLocaleString()} listing{total === 1 ? "" : "s"} — each
               opens on its own page with menu and halal details.
             </p>

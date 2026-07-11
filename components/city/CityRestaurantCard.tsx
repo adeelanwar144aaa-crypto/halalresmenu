@@ -26,7 +26,7 @@ export function CityRestaurantCard({
     <li>
       <Link
         href={restaurantSubdomainUrl(restaurant.slug)}
-        className="flex gap-4 rounded-2xl border border-zinc-100 bg-white p-4 shadow-card transition hover:border-halal-200 hover:shadow-card-hover sm:p-5"
+        className="flex gap-4 rounded-2xl border border-halal-100 bg-white p-4 shadow-card transition hover:border-halal-300 hover:shadow-card-hover sm:p-5"
       >
         <RestaurantThumbnail
           name={restaurant.name}
@@ -36,9 +36,9 @@ export function CityRestaurantCard({
           height={96}
         />
         <div className="min-w-0 flex-1">
-          <span className="font-semibold text-zinc-900">{restaurant.name}</span>
+          <span className="font-semibold text-halal-950">{restaurant.name}</span>
           {meta ? (
-            <span className="mt-1 block text-sm text-zinc-500">{meta}</span>
+            <span className="mt-1 block text-sm text-halal-700/75">{meta}</span>
           ) : null}
         </div>
       </Link>

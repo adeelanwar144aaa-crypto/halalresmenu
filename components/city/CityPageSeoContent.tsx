@@ -4,7 +4,7 @@ import { getFeaturedCityHint } from "@/lib/city-seo";
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="font-serif text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
+    <h2 className="font-serif text-xl font-bold tracking-tight text-halal-950 sm:text-2xl">
       {children}
     </h2>
   );
@@ -62,10 +62,10 @@ export function CityPageSeoContent({ ctx }: { ctx: CitySeoContext }) {
             {topCuisines.map((cuisine) => (
               <span
                 key={cuisine.name}
-                className="rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm ring-1 ring-zinc-200/80"
+                className="rounded-full bg-halal-50 px-4 py-2 text-sm font-medium text-halal-900 ring-1 ring-halal-200/90"
               >
                 {cuisine.name}
-                <span className="ml-2 text-zinc-400">({cuisine.count})</span>
+                <span className="ml-2 text-halal-600/70">({cuisine.count})</span>
               </span>
             ))}
           </div>
@@ -86,7 +86,7 @@ export function CityPageSeoContent({ ctx }: { ctx: CitySeoContext }) {
             {localAreas.map((area) => (
               <span
                 key={area}
-                className="rounded-xl border border-zinc-200/80 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800"
+                className="rounded-xl border border-halal-200/80 bg-halal-50/80 px-4 py-2.5 text-sm font-medium text-halal-900"
               >
                 Halal restaurants near {area}
               </span>
@@ -108,7 +108,7 @@ export function CityPageSeoContent({ ctx }: { ctx: CitySeoContext }) {
             {dishKeywords.map((dish) => (
               <div
                 key={dish}
-                className="rounded-xl border border-zinc-200/80 bg-zinc-50 px-4 py-3 text-sm font-medium capitalize text-zinc-800"
+                className="rounded-xl border border-halal-200/70 bg-halal-50/60 px-4 py-3 text-sm font-medium capitalize text-halal-900"
               >
                 {dish}
               </div>
@@ -117,7 +117,7 @@ export function CityPageSeoContent({ ctx }: { ctx: CitySeoContext }) {
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white px-6 py-8 sm:px-8">
+      <section className="rounded-2xl border border-halal-200/80 bg-gradient-to-br from-white to-halal-50/40 px-6 py-8 sm:px-8">
         <SectionTitle>Frequently asked questions</SectionTitle>
         <dl className="mt-6 space-y-6">
           <div>

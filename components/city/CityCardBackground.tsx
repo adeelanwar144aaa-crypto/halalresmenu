@@ -40,7 +40,7 @@ export function CityCardBackground({
         }}
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 to-black/70"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-halal-950/75 via-halal-900/65 to-halal-950/85"
         aria-hidden
       />
     </>
