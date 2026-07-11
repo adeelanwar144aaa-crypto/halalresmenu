@@ -1,8 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CitySeoContext } from "@/lib/city-seo";
 import { getFeaturedCityHint } from "@/lib/city-seo";
-import { cityAllPath } from "@/lib/city-slug";
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
@@ -129,14 +127,7 @@ export function CityPageSeoContent({ ctx }: { ctx: CitySeoContext }) {
             <dd className="mt-2 leading-relaxed text-zinc-600">
               HalalResMenu lists {total.toLocaleString()} halal restaurants in{" "}
               {cityName}. Browse the directory below, open any venue for menus and
-              reviews, or view the{" "}
-              <Link
-                href={cityAllPath(citySlug)}
-                className="font-semibold text-halal-700 underline decoration-halal-200 underline-offset-2 hover:text-halal-900"
-              >
-                complete {cityName} list
-              </Link>
-              .
+              reviews, or scroll down to see all the restaurants.
             </dd>
           </div>
           <div>

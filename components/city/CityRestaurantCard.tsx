@@ -1,11 +1,26 @@
 import Link from "next/link";
 import { RestaurantThumbnail } from "@/components/restaurant/RestaurantThumbnail";
 import { firstRestaurantPhotoUrl } from "@/lib/restaurant-photos";
-import type { CityRestaurant } from "@/lib/city-restaurants";
+import type { CityRestaurant, CityRestaurantBrowse } from "@/lib/city-restaurants";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
-export function CityRestaurantCard({ restaurant }: { restaurant: CityRestaurant }) {
+export function CityRestaurantCard({
+  restaurant,
+}: {
+  restaurant: CityRestaurant | CityRestaurantBrowse;
+}) {
   const photoUrl = firstRestaurantPhotoUrl(restaurant.photos);
+  const rating =
+    "rating" in restaurant && restaurant.rating != null
+      ? Number(restaurant.rating)
+      : null;
+  const meta = [
+    restaurant.cuisine_type,
+    restaurant.city,
+    rating != null && Number.isFinite(rating) ? `${rating.toFixed(1)}★` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <li>
@@ -22,9 +37,9 @@ export function CityRestaurantCard({ restaurant }: { restaurant: CityRestaurant 
         />
         <div className="min-w-0 flex-1">
           <span className="font-semibold text-zinc-900">{restaurant.name}</span>
-          <span className="mt-1 block text-sm text-zinc-500">
-            {[restaurant.cuisine_type, restaurant.city].filter(Boolean).join(" · ")}
-          </span>
+          {meta ? (
+            <span className="mt-1 block text-sm text-zinc-500">{meta}</span>
+          ) : null}
         </div>
       </Link>
     </li>

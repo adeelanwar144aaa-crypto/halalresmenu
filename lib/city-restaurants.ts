@@ -20,6 +20,31 @@ export type CityRestaurant = {
   photos: unknown;
 };
 
+export type CityRestaurantBrowse = CityRestaurant & {
+  halal_status: string | null;
+  price_range: string | null;
+  rating: number | null;
+  dine_in: boolean | null;
+  takeaway: boolean | null;
+  delivery: boolean | null;
+  dine_in_available: boolean | null;
+  has_takeaway: boolean | null;
+  has_delivery: boolean | null;
+  takeaway_available: boolean | null;
+  delivery_available: boolean | null;
+  family_friendly: boolean | null;
+  prayer_space: boolean | null;
+  muslim_owned: boolean | null;
+  pork_free: boolean | null;
+  alcohol_on_premises: boolean | null;
+  catering_available: boolean | null;
+  reservation_available: boolean | null;
+  localArea: string | null;
+};
+
+const BROWSE_SELECT =
+  "slug,name,city,cuisine_type,photos,halal_status,price_range,rating,dine_in,takeaway,delivery,dine_in_available,has_takeaway,has_delivery,takeaway_available,delivery_available,family_friendly,prayer_space,muslim_owned,pork_free,alcohol_on_premises,catering_available,reservation_available,address";
+
 export type CityRestaurantsResult = {
   restaurants: CityRestaurant[];
   total: number;
@@ -94,6 +119,60 @@ export async function fetchAllCityRestaurants(
 
     if (!data?.length) break;
     rows.push(...(data as CityRestaurant[]));
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return rows;
+}
+
+/** All restaurants in a city with fields needed for browse filters. */
+export async function fetchCityRestaurantsBrowse(
+  citySlug: string,
+  cityName: string
+): Promise<CityRestaurantBrowse[]> {
+  const pattern = citySlugToPattern(resolveCanonicalCitySlug(citySlug));
+  const supabase = getSupabaseServer();
+  if (!supabase) throw new SupabaseUnavailableError();
+
+  const rows: CityRestaurantBrowse[] = [];
+  let offset = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select(BROWSE_SELECT)
+      .ilike("city", pattern)
+      .order("name", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throwIfSupabaseUnavailable(error, "city restaurants browse fetch");
+      throw error;
+    }
+
+    if (!data?.length) break;
+
+    for (const row of data) {
+      const cityLabel = String(row.city ?? "").trim();
+      let localArea: string | null = null;
+      if (cityLabel && cityLabel.toLowerCase() !== cityName.toLowerCase()) {
+        localArea = cityLabel;
+      } else {
+        localArea = extractLocalAreaFromAddress(
+          String(row.address ?? ""),
+          cityName
+        );
+      }
+
+      const { address: _address, ...rest } = row;
+      rows.push({
+        ...(rest as Omit<CityRestaurantBrowse, "localArea">),
+        localArea,
+      });
+    }
+
     if (data.length < pageSize) break;
     offset += pageSize;
   }

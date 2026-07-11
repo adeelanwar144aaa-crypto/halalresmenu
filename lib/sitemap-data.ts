@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { cacheControlHeader, CACHE_TTL } from "@/lib/cache-config";
-import { cityAllPath, cityHubPath, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
+import { cityHubPath, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
@@ -149,20 +149,12 @@ export function buildCitySitemapEntries(
   const entries: MetadataRoute.Sitemap = [];
 
   for (const city of cities) {
-    entries.push(
-      {
-        url: `${apex}${cityHubPath(city.slug)}`,
-        lastModified: now,
-        changeFrequency: "weekly",
-        priority: 0.75,
-      },
-      {
-        url: `${apex}${cityAllPath(city.slug)}`,
-        lastModified: now,
-        changeFrequency: "weekly",
-        priority: 0.65,
-      }
-    );
+    entries.push({
+      url: `${apex}${cityHubPath(city.slug)}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.75,
+    });
   }
 
   return entries;

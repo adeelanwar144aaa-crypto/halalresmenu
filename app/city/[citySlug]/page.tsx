@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CityLoadMore } from "@/components/city/CityLoadMore";
 import { CityPageHero } from "@/components/city/CityPageHero";
 import { CityPageSeoContent } from "@/components/city/CityPageSeoContent";
-import { CityRestaurantList } from "@/components/city/CityRestaurantList";
+import { CityRestaurantBrowseSection } from "@/components/city/CityRestaurantBrowseSection";
 import {
-  cityAllPath,
   cityDisplayName,
   cityHubPath,
   resolveCanonicalCitySlug,
@@ -17,8 +15,7 @@ import {
   buildCitySeoContext,
 } from "@/lib/city-seo";
 import {
-  CITY_PAGE_SIZE,
-  fetchCityRestaurants,
+  fetchCityRestaurantsBrowse,
   fetchCitySeoStats,
 } from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
@@ -81,11 +78,12 @@ export default async function CityHubPage({ params }: PageProps) {
   }
 
   const cityName = cityDisplayName(canonical);
-  const [{ restaurants, total }, seoStats] = await Promise.all([
-    fetchCityRestaurants(canonical, { limit: CITY_PAGE_SIZE, offset: 0 }),
+  const [restaurants, seoStats] = await Promise.all([
+    fetchCityRestaurantsBrowse(canonical, cityName),
     fetchCitySeoStats(canonical, cityName),
   ]);
 
+  const total = restaurants.length;
   if (total === 0) notFound();
 
   const seoContext = buildCitySeoContext({
@@ -96,7 +94,6 @@ export default async function CityHubPage({ params }: PageProps) {
     areaCounts: seoStats.areaCounts,
   });
 
-  const hasMore = total > CITY_PAGE_SIZE;
 
   return (
     <div>
@@ -113,32 +110,20 @@ export default async function CityHubPage({ params }: PageProps) {
         <CityPageSeoContent ctx={seoContext} />
 
         <section className="mt-14 border-t border-zinc-200/80 pt-12">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-zinc-900 sm:text-3xl">
-                Halal restaurants in {cityName}
-              </h2>
-              <p className="mt-2 text-zinc-600">
-                {total.toLocaleString()} listing{total === 1 ? "" : "s"} — each
-                opens on its own page with menu and halal details.
-              </p>
-            </div>
-            <Link
-              href={cityAllPath(canonical)}
-              className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
-            >
-              View complete list →
-            </Link>
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-zinc-900 sm:text-3xl">
+              Halal restaurants in {cityName}
+            </h2>
+            <p className="mt-2 text-zinc-600">
+              {total.toLocaleString()} listing{total === 1 ? "" : "s"} — each
+              opens on its own page with menu and halal details.
+            </p>
           </div>
 
-          <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <CityRestaurantList restaurants={restaurants} />
-            <CityLoadMore
-              citySlug={canonical}
-              initialOffset={restaurants.length}
-              hasMore={hasMore}
-            />
-          </ul>
+          <CityRestaurantBrowseSection
+            cityName={cityName}
+            restaurants={restaurants}
+          />
         </section>
       </div>
     </div>
