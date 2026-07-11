@@ -12,6 +12,14 @@ export type PageMetaInput = {
   ogImage?: string | null;
 };
 
+/** Append "Restaurant" when the name does not already include that word. */
+export function nameWithRestaurantIfNeeded(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "Restaurant";
+  if (/\brestaurant\b/i.test(trimmed)) return trimmed;
+  return `${trimmed} Restaurant`;
+}
+
 function canonicalUrlForPage(slug: string, pageType: RestaurantPageType): string {
   switch (pageType) {
     case "menu":
@@ -36,19 +44,19 @@ function buildTitleAndDescription(input: PageMetaInput): {
     case "overview":
       if (name && cuisine && city) {
         return {
-          title: `${name} | Overview, Menu And Reviews`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu And Reviews (Updated 2026)`,
           description: `${name} serves ${cuisine} in ${city}. View halal certification, full menu, reviews and prayer-aware dining info.`,
         };
       }
       if (name) {
         return {
-          title: `${name} | Overview, Menu And Reviews`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu And Reviews (Updated 2026)`,
           description:
             "View halal certification, menu, and reviews for this restaurant on HalalResMenu.",
         };
       }
       return {
-        title: "Restaurant | Overview, Menu And Reviews | HalalResMenu",
+        title: "Restaurant Menu And Reviews (Updated 2026)",
         description:
           "View halal certification, menu, and reviews for this restaurant on HalalResMenu.",
       };
@@ -56,19 +64,19 @@ function buildTitleAndDescription(input: PageMetaInput): {
     case "menu":
       if (name && city) {
         return {
-          title: `${name} | Updated 2026 Menu With Prices`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updates 2026`,
           description: `View the full halal menu and prices at ${name} in ${city}. Browse all dishes, categories and updated prices for 2026.`,
         };
       }
       if (name) {
         return {
-          title: `${name} | Updated 2026 Menu With Prices`,
+          title: `${nameWithRestaurantIfNeeded(name)} Menu With Prices Updates 2026`,
           description:
             "Browse the full halal menu with updated 2026 prices on HalalResMenu.",
         };
       }
       return {
-        title: "Restaurant Menu | Updated 2026 Menu With Prices | HalalResMenu",
+        title: "Restaurant Menu With Prices Updates 2026",
         description:
           "Browse the full halal menu with updated 2026 prices on HalalResMenu.",
       };
