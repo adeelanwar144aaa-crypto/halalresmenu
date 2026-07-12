@@ -41,20 +41,22 @@ export default async function RestaurantMenuPage({ params }: PageProps) {
 
   const menuData = parseMenuData(row.menu_data);
   const site = getSiteUrl();
+  const menuUrl = restaurantCanonicalUrl(restaurant, "/menu");
 
   return (
     <>
       <SchemaMarkup
         restaurant={row}
-        url={restaurantCanonicalUrl(restaurant, "/menu")}
+        url={menuUrl}
         breadcrumbs={[
           { name: "Home", url: site },
           { name: row.name, url: restaurantCanonicalUrl(restaurant) },
           {
             name: "Menu",
-            url: restaurantCanonicalUrl(restaurant, "/menu"),
+            url: menuUrl,
           },
         ]}
+        menuData={menuData}
       />
       <div className="border-b border-halal-100/60 bg-gradient-to-r from-halal-50/50 via-white to-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

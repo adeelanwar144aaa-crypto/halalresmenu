@@ -1,6 +1,32 @@
-import type { MenuDataItem, Restaurant, Review } from "@/types/restaurant";
+import type {
+  MenuData,
+  MenuDataItem,
+  Restaurant,
+  Review,
+} from "@/types/restaurant";
+import { normalizeOpeningHours } from "@/lib/opening-hours-display";
 
 type Breadcrumb = { name: string; url: string };
+
+const WEEK_DAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+const SCHEMA_DAY: Record<(typeof WEEK_DAY_KEYS)[number], string> = {
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+  sunday: "Sunday",
+};
 
 /** Strip undefined values so JSON-LD stays valid and compact. */
 function stripUndefined(value: unknown): unknown {
@@ -54,6 +80,57 @@ export function schemaDatePublished(
   }
 
   return undefined;
+}
+
+/** Normalize stored open/close strings to HH:MM (24h). */
+export function toSchemaTime(
+  raw: string | null | undefined
+): string | undefined {
+  if (raw == null) return undefined;
+  const s = String(raw).trim();
+  if (!s) return undefined;
+
+  const hm = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hm) {
+    return `${hm[1].padStart(2, "0")}:${hm[2]}`;
+  }
+
+  const compact = s.match(/^(\d{3,4})$/);
+  if (compact) {
+    const p = compact[1].padStart(4, "0");
+    return `${p.slice(0, 2)}:${p.slice(2)}`;
+  }
+
+  return undefined;
+}
+
+/**
+ * Build OpeningHoursSpecification from the same day-key open/close fields
+ * rendered by the visible hours table (getWeekOpeningRows). Omits closed /
+ * incomplete days. Returns undefined when no usable hours exist.
+ */
+export function buildOpeningHoursSpecification(
+  opening: Restaurant["opening_hours"]
+): Record<string, unknown>[] | undefined {
+  const oh = normalizeOpeningHours(opening);
+  if (!oh) return undefined;
+
+  const specs: Record<string, unknown>[] = [];
+  for (const key of WEEK_DAY_KEYS) {
+    const day = oh[key];
+    if (!day || day.closed) continue;
+    const opens = toSchemaTime(day.open ?? undefined);
+    const closes = toSchemaTime(day.close ?? undefined);
+    if (!opens || !closes) continue;
+    specs.push({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: SCHEMA_DAY[key],
+      opens,
+      closes,
+    });
+  }
+
+  return specs.length > 0 ? specs : undefined;
 }
 
 function buildAggregateRating(
@@ -131,18 +208,71 @@ function buildReviewNodes(reviews: Review[]): Record<string, unknown>[] {
     .filter((node) => node.reviewBody != null || node.reviewRating != null);
 }
 
+function buildMenuItemNode(item: MenuDataItem): Record<string, unknown> {
+  return stripUndefined({
+    "@type": "MenuItem",
+    name: item.name,
+    description: item.description ?? undefined,
+    offers:
+      item.price != null && Number.isFinite(item.price)
+        ? {
+            "@type": "Offer",
+            price: item.price,
+            priceCurrency: "GBP",
+          }
+        : undefined,
+  }) as Record<string, unknown>;
+}
+
+/** Full Schema.org Menu with sections — used on the dedicated /menu page. */
+export function buildFullMenuNode(
+  restaurant: Restaurant,
+  menuData: MenuData,
+  menuId: string
+): Record<string, unknown> | null {
+  const sections = menuData.categories
+    .map((category) => {
+      const items = category.items
+        .filter((item) => item.name?.trim())
+        .map(buildMenuItemNode);
+      if (items.length === 0) return null;
+      return {
+        "@type": "MenuSection",
+        name: category.name,
+        hasMenuItem: items,
+      };
+    })
+    .filter((s): s is NonNullable<typeof s> => s != null);
+
+  if (sections.length === 0) return null;
+
+  return stripUndefined({
+    "@type": "Menu",
+    "@id": menuId,
+    name: `Menu — ${restaurant.name}`,
+    hasMenuSection: sections,
+  }) as Record<string, unknown>;
+}
+
 function buildRestaurantNode(
   restaurant: Restaurant,
   url: string,
-  reviews: Review[]
+  reviews: Review[],
+  opts?: { hasMenuId?: string }
 ): Record<string, unknown> {
   const sameAs = [restaurant.website].filter(Boolean) as string[];
   const reviewNodes = buildReviewNodes(reviews);
   const aggregateRating =
-    reviewNodes.length > 0 ? buildAggregateRating(restaurant, reviews) : undefined;
+    reviewNodes.length > 0
+      ? buildAggregateRating(restaurant, reviews)
+      : undefined;
   // Google requires aggregateRating whenever review objects are present.
   const nestedReviews =
     aggregateRating && reviewNodes.length > 0 ? reviewNodes : undefined;
+
+  const openingHoursSpecification = buildOpeningHoursSpecification(
+    restaurant.opening_hours
+  );
 
   return stripUndefined({
     "@type": ["Restaurant", "FoodEstablishment", "LocalBusiness"],
@@ -170,6 +300,8 @@ function buildRestaurantNode(
     servesCuisine: restaurant.cuisine_type ?? undefined,
     priceRange: restaurant.price_range ?? undefined,
     sameAs: sameAs.length ? sameAs : undefined,
+    openingHoursSpecification,
+    hasMenu: opts?.hasMenuId ? { "@id": opts.hasMenuId } : undefined,
     aggregateRating,
     review: nestedReviews,
   }) as Record<string, unknown>;
@@ -199,18 +331,7 @@ function buildMenuListNode(
     itemListElement: menuSample.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      item: stripUndefined({
-        "@type": "MenuItem",
-        name: item.name,
-        description: item.description ?? undefined,
-        offers: item.price
-          ? {
-              "@type": "Offer",
-              price: item.price,
-              priceCurrency: "GBP",
-            }
-          : undefined,
-      }),
+      item: buildMenuItemNode(item),
     })),
   }) as Record<string, unknown>;
 }
@@ -250,6 +371,7 @@ export function buildRestaurantSchemaGraph({
   breadcrumbs,
   reviews = [],
   menuSample = [],
+  menuData = null,
   includeFaq = false,
 }: {
   restaurant: Restaurant;
@@ -257,15 +379,27 @@ export function buildRestaurantSchemaGraph({
   breadcrumbs: Breadcrumb[];
   reviews?: Review[];
   menuSample?: MenuDataItem[];
+  /** When set, emit a full Schema.org Menu linked via Restaurant.hasMenu. */
+  menuData?: MenuData | null;
   includeFaq?: boolean;
 }): Record<string, unknown> {
+  const menuId = `${url}#menu`;
+  const fullMenu =
+    menuData != null ? buildFullMenuNode(restaurant, menuData, menuId) : null;
+
   const graph: Record<string, unknown>[] = [
-    buildRestaurantNode(restaurant, url, reviews),
+    buildRestaurantNode(restaurant, url, reviews, {
+      hasMenuId: fullMenu ? menuId : undefined,
+    }),
     buildBreadcrumbNode(breadcrumbs),
   ];
 
-  const menuList = buildMenuListNode(restaurant, menuSample);
-  if (menuList) graph.push(menuList);
+  if (fullMenu) {
+    graph.push(fullMenu);
+  } else {
+    const menuList = buildMenuListNode(restaurant, menuSample);
+    if (menuList) graph.push(menuList);
+  }
 
   if (includeFaq) graph.push(buildFaqNode(restaurant));
 
@@ -281,6 +415,7 @@ export function SchemaMarkup({
   breadcrumbs,
   reviews = [],
   menuSample = [],
+  menuData = null,
   includeFaq = false,
 }: {
   restaurant: Restaurant;
@@ -288,6 +423,7 @@ export function SchemaMarkup({
   breadcrumbs: Breadcrumb[];
   reviews?: Review[];
   menuSample?: MenuDataItem[];
+  menuData?: MenuData | null;
   includeFaq?: boolean;
 }) {
   const schema = buildRestaurantSchemaGraph({
@@ -296,6 +432,7 @@ export function SchemaMarkup({
     breadcrumbs,
     reviews,
     menuSample,
+    menuData,
     includeFaq,
   });
 

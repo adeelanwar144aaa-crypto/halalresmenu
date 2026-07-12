@@ -78,7 +78,19 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
   const site = getSiteUrl();
   const canonical = restaurantCanonicalUrl(restaurant);
   const reviewSummary = resolveRestaurantReviewSummary(row, reviews);
-  const { average, count, reviews: googleReviews } = reviewSummary;
+  const { reviews: googleReviews } = reviewSummary;
+
+  /** Authoritative Google place rating — must match JSON-LD aggregateRating. */
+  const displayRating =
+    typeof row.rating === "number" && Number.isFinite(row.rating) && row.rating > 0
+      ? row.rating
+      : null;
+  const displayReviewCount =
+    typeof row.total_reviews === "number" &&
+    Number.isFinite(row.total_reviews) &&
+    row.total_reviews > 0
+      ? row.total_reviews
+      : 0;
 
   const open = isRestaurantOpenNow(row.opening_hours);
   const openStatus: "open" | "closed" | "unknown" =
@@ -114,8 +126,8 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
         restaurant={row}
         photoUrls={galleryUrls}
         slug={restaurant}
-        averageRating={average ?? undefined}
-        reviewCount={count ?? 0}
+        averageRating={displayRating ?? undefined}
+        reviewCount={displayReviewCount}
         openStatus={openStatus}
       />
       <AboutArticle restaurant={row} />
@@ -138,8 +150,8 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
       <ReviewsArticle
         restaurantName={restaurantName}
         reviews={googleReviews}
-        overallRating={average ?? null}
-        totalReviewCount={count ?? 0}
+        overallRating={displayRating}
+        totalReviewCount={displayReviewCount}
       />
       <LocationFindUs restaurant={row} />
       <NearbyMosques restaurant={row} />
