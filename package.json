@@ -28,6 +28,8 @@
     "db:takeaway-defaults": "node -e \"console.log('Run scripts/migrations/set-has-takeaway-delivery.sql in the Supabase SQL editor.')\"",
     "db:google-places": "node -e \"console.log('Run scripts/migrations/add-google-places-columns.sql in the Supabase SQL editor.')\"",
     "db:meta-tags": "node -e \"console.log('Run scripts/migrations/add-meta-tags-columns.sql in the Supabase SQL editor.')\"",
+    "db:restaurant-themes": "node -e \"console.log('Run scripts/migrations/add-restaurant-theme-columns.sql in the Supabase SQL editor.')\"",
+    "backfill-restaurant-themes": "npx tsx scripts/backfill-restaurant-themes.js",
     "generate-meta-tags": "node scripts/generate-meta-tags.js",
     "import-restaurants-csv": "node scripts/import-restaurants-csv.js",
     "fetch-city-images": "node scripts/fetch-city-images-pexels.js"

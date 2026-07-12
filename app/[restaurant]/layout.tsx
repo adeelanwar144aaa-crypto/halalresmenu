@@ -23,7 +23,7 @@ export default async function RestaurantLayout({
   const onSubdomain = Boolean(hdrs.get("x-hrm-restaurant-slug"));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
+    <div className="min-h-screen bg-gradient-to-b from-theme-bg via-white to-theme-bg">
       <RestaurantNavigation
         slug={restaurant}
         restaurantName={row.name?.trim() || "Restaurant"}

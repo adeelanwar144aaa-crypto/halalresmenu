@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 
 export const runtime = "edge";
+import { headers } from "next/headers";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import {
+  themeFromRestaurant,
+  themeToCssProperties,
+} from "@/lib/restaurant-theme";
+import { fetchRestaurantBySlug } from "@/lib/supabase";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -42,14 +49,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hdrs = await headers();
+  const restaurantSlug = hdrs.get("x-hrm-restaurant-slug");
+
+  let themeStyle: CSSProperties | undefined;
+  let isRestaurantTheme = false;
+
+  if (restaurantSlug) {
+    const restaurant = await fetchRestaurantBySlug(restaurantSlug);
+    if (restaurant) {
+      isRestaurantTheme = true;
+      themeStyle = themeToCssProperties(
+        themeFromRestaurant(restaurant)
+      ) as CSSProperties;
+    }
+  }
+
   return (
-    <html lang="en">
-      <body className="min-h-screen antialiased">
+    <html
+      lang="en"
+      className={isRestaurantTheme ? "restaurant-theme" : undefined}
+      style={themeStyle}
+    >
+      <body className="min-h-screen font-sans antialiased">
         <SiteChrome>{children}</SiteChrome>
         <GoogleAnalytics gaId="G-LMCL7BMSJR" />
       </body>

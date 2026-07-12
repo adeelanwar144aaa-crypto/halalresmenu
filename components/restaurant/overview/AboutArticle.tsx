@@ -22,10 +22,7 @@ export function AboutArticle({ restaurant }: { restaurant: Restaurant }) {
       className="scroll-mt-32 border-b border-zinc-100/80 bg-white py-10 sm:scroll-mt-36 sm:py-12"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div
-          className="rounded-2xl px-6 py-8 sm:px-8 sm:py-10"
-          style={{ backgroundColor: "#f9f9f9" }}
-        >
+        <div className="rounded-2xl bg-theme-bg/80 px-6 py-8 sm:px-8 sm:py-10">
           {location ? (
             <p className="text-sm font-semibold text-zinc-600">
               <span aria-hidden>📍 </span>
@@ -38,10 +35,7 @@ export function AboutArticle({ restaurant }: { restaurant: Restaurant }) {
               className="mt-2 hidden h-9 w-1 shrink-0 rounded-full bg-halal-600 sm:block"
               aria-hidden
             />
-            <h2
-              className="text-3xl font-bold leading-tight tracking-tight"
-              style={{ color: "#1a3a2a" }}
-            >
+            <h2 className="text-3xl font-bold leading-tight tracking-tight text-theme-accent">
               {heading}
             </h2>
           </div>

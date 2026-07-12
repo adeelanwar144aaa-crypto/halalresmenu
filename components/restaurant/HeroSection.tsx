@@ -308,28 +308,35 @@ export function HeroSection({
         : 0;
   const hasRating = displayRating != null && displayCount > 0;
 
+  const patternSvg =
+    "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")";
+
   return (
     <section
       id="overview"
       className="relative scroll-mt-32 min-h-[600px] overflow-hidden border-b-2 border-halal-300/60 sm:scroll-mt-36"
       style={{
-        background: "linear-gradient(180deg, #f0faf4 0%, #e8f5e9 100%)",
+        background:
+          "linear-gradient(180deg, rgb(var(--color-bg-rgb)) 0%, rgb(var(--halal-50)) 100%)",
       }}
     >
-      {/* Subtle texture overlay */}
+      {/* Theme-tinted texture via mask so fill tracks --halal-600 */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.45]"
+        className="pointer-events-none absolute inset-0 bg-halal-600 opacity-[0.06]"
         aria-hidden
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a7a4a' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          maskImage: patternSvg,
+          WebkitMaskImage: patternSvg,
+          maskSize: "60px 60px",
+          WebkitMaskSize: "60px 60px",
         }}
       />
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{
-          backgroundImage: `radial-gradient(ellipse 70% 60% at 10% 20%, rgba(26, 122, 74, 0.07), transparent 55%),
-            radial-gradient(ellipse 50% 40% at 90% 10%, rgba(26, 122, 74, 0.05), transparent 50%)`,
+          backgroundImage: `radial-gradient(ellipse 70% 60% at 10% 20%, rgb(var(--halal-600) / 0.07), transparent 55%),
+            radial-gradient(ellipse 50% 40% at 90% 10%, rgb(var(--halal-600) / 0.05), transparent 50%)`,
         }}
       />
 

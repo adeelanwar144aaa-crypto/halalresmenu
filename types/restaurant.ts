@@ -90,6 +90,10 @@ export type Restaurant = {
   menu_data?: MenuData | Record<string, unknown> | null;
   /** AI-generated SEO copy (jsonb) */
   seo_content?: SeoContent | Record<string, unknown> | null;
+  /** Per-subdomain theme (hex). Assigned by cuisine+name hash if null. */
+  primary_color?: string | null;
+  background_color?: string | null;
+  accent_color?: string | null;
   created_at: string;
   updated_at: string;
 };

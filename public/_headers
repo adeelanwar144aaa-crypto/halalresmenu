@@ -1,0 +1,10 @@
+/**
+ * Cloudflare Pages / Workers static asset headers.
+ * Ensures fonts get correct MIME + long-cache (immutable hashed paths optional).
+ */
+/fonts/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Content-Type: font/woff2

@@ -8,43 +8,58 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        /** Primary halal green — #1a7a4a */
+        /**
+         * Brand / tenant scale — RGB channels from CSS vars so opacity
+         * modifiers (e.g. bg-halal-600/80) work. Defaults = brand green;
+         * restaurant subdomains override --halal-* on <html>.
+         */
         halal: {
-          50: "#ecfdf5",
-          100: "#d1fae5",
-          200: "#a7f3d0",
-          300: "#6ee7b7",
-          400: "#34d399",
-          500: "#228f5e",
-          600: "#1a7a4a",
-          700: "#155e3d",
-          800: "#124a31",
-          900: "#0f3d29",
-          950: "#052e1a",
+          50: "rgb(var(--halal-50) / <alpha-value>)",
+          100: "rgb(var(--halal-100) / <alpha-value>)",
+          200: "rgb(var(--halal-200) / <alpha-value>)",
+          300: "rgb(var(--halal-300) / <alpha-value>)",
+          400: "rgb(var(--halal-400) / <alpha-value>)",
+          500: "rgb(var(--halal-500) / <alpha-value>)",
+          600: "rgb(var(--halal-600) / <alpha-value>)",
+          700: "rgb(var(--halal-700) / <alpha-value>)",
+          800: "rgb(var(--halal-800) / <alpha-value>)",
+          900: "rgb(var(--halal-900) / <alpha-value>)",
+          950: "rgb(var(--halal-950) / <alpha-value>)",
         },
-        /** Alias for legacy `brand-*` utilities */
         brand: {
-          50: "#ecfdf5",
-          100: "#d1fae5",
-          500: "#228f5e",
-          700: "#1a7a4a",
-          900: "#0f3d29",
+          50: "rgb(var(--halal-50) / <alpha-value>)",
+          100: "rgb(var(--halal-100) / <alpha-value>)",
+          500: "rgb(var(--halal-500) / <alpha-value>)",
+          700: "rgb(var(--halal-600) / <alpha-value>)",
+          900: "rgb(var(--halal-900) / <alpha-value>)",
+        },
+        /** Explicit theme tokens for headlines / page wash */
+        theme: {
+          primary: "rgb(var(--color-primary-rgb) / <alpha-value>)",
+          bg: "rgb(var(--color-bg-rgb) / <alpha-value>)",
+          accent: "rgb(var(--color-accent-rgb) / <alpha-value>)",
         },
       },
       fontFamily: {
         sans: [
-          "ui-sans-serif",
-          "system-ui",
-          "-apple-system",
-          "Segoe UI",
-          "Roboto",
+          "Switzer",
+          "Helvetica Neue",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
+        serif: [
+          "Switzer",
+          "Helvetica Neue",
+          "Helvetica",
+          "Arial",
           "sans-serif",
         ],
       },
       boxShadow: {
         card: "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
         "card-hover":
-          "0 10px 40px -10px rgb(26 122 74 / 0.12), 0 4px 12px rgb(0 0 0 / 0.06)",
+          "0 10px 40px -10px rgb(var(--halal-600) / 0.12), 0 4px 12px rgb(0 0 0 / 0.06)",
       },
     },
   },
