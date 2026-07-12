@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { extractRestaurantArea } from "@/lib/restaurant-area";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
 export type RestaurantPageType = "overview" | "menu" | "halal-info";
@@ -9,8 +10,101 @@ export type PageMetaInput = {
   name?: string | null;
   cuisine?: string | null;
   city?: string | null;
+  address?: string | null;
+  postcode?: string | null;
   ogImage?: string | null;
 };
+
+/** Deterministic 0..n-1 pick from slug (stable across builds). */
+export function descriptionVariantIndex(slug: string, variantCount: number): number {
+  let hash = 2166136261;
+  for (let i = 0; i < slug.length; i++) {
+    hash ^= slug.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash) % variantCount;
+}
+
+/**
+ * Overview meta description: area-aware, ~150-160 chars, 4 sentence skeletons.
+ * Title generation must stay untouched — this returns description only.
+ */
+function buildOverviewDescription(
+  name: string,
+  cuisine: string,
+  area: string,
+  slug: string
+): string {
+  const variant = descriptionVariantIndex(slug, 4);
+  const openings = [
+    `${name} serves ${cuisine} in ${area}.`,
+    `Find ${cuisine} at ${name} in ${area}.`,
+    `${name} in ${area} offers ${cuisine}.`,
+    `Discover ${cuisine} at ${name} in ${area}.`,
+  ] as const;
+
+  // Longest to shortest tails per variant (same meaning, different length).
+  const tails: ReadonlyArray<ReadonlyArray<string>> = [
+    [
+      " View verified halal certification, browse the full menu with prices, read guest reviews and prayer-aware dining details.",
+      " View halal certification, browse the full menu with prices, read guest reviews and prayer-aware dining details.",
+      " View halal certification, the full menu, guest reviews and prayer-aware dining details.",
+      " View halal certification, full menu, reviews and prayer-aware dining info.",
+    ],
+    [
+      " See verified halal certification, browse the full menu with prices, read guest reviews and prayer-aware dining information.",
+      " See verified halal certification, browse the full menu, read reviews and prayer-aware dining information.",
+      " See halal certification, browse the full menu, read reviews and prayer-aware dining information.",
+      " See halal certification, full menu, reviews and prayer-aware dining information.",
+    ],
+    [
+      " Check verified halal status and certification, the full menu with prices, guest reviews and prayer-aware dining info before you visit.",
+      " Check halal status and certification, the full menu, guest reviews and prayer-aware dining info before you visit.",
+      " Check halal status, the full menu, guest reviews and prayer-aware dining info before you visit.",
+      " Check halal status, full menu, reviews and prayer-aware dining info before you visit.",
+    ],
+    [
+      " Explore the full menu with prices, guest reviews, verified halal certification details and prayer-aware dining information.",
+      " Explore the full menu, guest reviews, halal certification details and prayer-aware dining information.",
+      " Explore the full menu, reviews, halal certification and prayer-aware dining information.",
+      " Explore the full menu, reviews, halal certification and prayer-aware dining info.",
+    ],
+  ];
+
+  const opening = openings[variant]!;
+  const options = tails[variant]!;
+
+  let bestUnderMax = opening + options[options.length - 1]!;
+  let bestInRange: string | null = null;
+  for (const tail of options) {
+    const candidate = opening + tail;
+    if (candidate.length > 160) continue;
+    bestUnderMax = candidate;
+    if (candidate.length >= 150) {
+      bestInRange = candidate;
+      break;
+    }
+  }
+
+  let description = bestInRange ?? bestUnderMax;
+
+  if (description.length < 150) {
+    const pads = [
+      " Plan your visit with confidence.",
+      " Updated for diners in 2026.",
+      " Updated for 2026.",
+      " See details inside.",
+    ];
+    for (const pad of pads) {
+      if (description.length + pad.length <= 160) {
+        description += pad;
+        if (description.length >= 150) break;
+      }
+    }
+  }
+
+  return description;
+}
 
 /** Append "Restaurant" when the name does not already include that word. */
 export function nameWithRestaurantIfNeeded(name: string): string {
@@ -43,9 +137,14 @@ function buildTitleAndDescription(input: PageMetaInput): {
   switch (input.pageType) {
     case "overview":
       if (name && cuisine && city) {
+        const { area } = extractRestaurantArea({
+          address: input.address,
+          postcode: input.postcode,
+          city,
+        });
         return {
           title: `${nameWithRestaurantIfNeeded(name)} Menu And Reviews (Updated 2026)`,
-          description: `${name} serves ${cuisine} in ${city}. View halal certification, full menu, reviews and prayer-aware dining info.`,
+          description: buildOverviewDescription(name, cuisine, area, input.slug),
         };
       }
       if (name) {

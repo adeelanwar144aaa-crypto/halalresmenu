@@ -57,6 +57,8 @@ export async function generateMetadata({
     name: row.name,
     cuisine: row.cuisine_type,
     city: row.city,
+    address: row.address,
+    postcode: row.postcode,
     ogImage,
   });
 }
