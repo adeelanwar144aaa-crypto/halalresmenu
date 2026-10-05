@@ -40,9 +40,6 @@ async function NearbyMosquesContent({
   }
 
   const mosques = await getMosquesForRestaurant(restaurant);
-  const hasStoredMosques =
-    Array.isArray(restaurant.nearby_mosques) &&
-    restaurant.nearby_mosques.length > 0;
 
   const timings = await Promise.all(
     mosques.slice(0, 5).map((m) =>
@@ -67,11 +64,7 @@ async function NearbyMosquesContent({
         <ul className="mt-10 grid gap-4 md:grid-cols-2">
           {mosques.length === 0 ? (
             <li className="rounded-2xl border border-dashed border-halal-200 bg-white px-5 py-8 text-center text-sm text-zinc-600 md:col-span-2">
-              {hasStoredMosques
-                ? "No mosques could be loaded from saved data."
-                : process.env.GOOGLE_PLACES_API_KEY
-                  ? "No mosques found within 2km. Run npm run download-photos-mosques to cache city mosques on all restaurants."
-                  : "No mosques on file yet. Run npm run download-photos-mosques (or add GOOGLE_PLACES_API_KEY for live search)."}
+              No nearby mosques listed yet.
             </li>
           ) : (
             mosques.map((m, idx) => {

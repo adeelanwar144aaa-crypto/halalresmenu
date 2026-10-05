@@ -5,7 +5,9 @@ import {
   hasTakeaway,
   TakeawayAvailableBadge,
 } from "@/components/restaurant/RestaurantBadges";
+import { MenuImagesGallery } from "@/components/restaurant/MenuImagesGallery";
 import { MenuSection } from "@/components/restaurant/MenuSection";
+import { parseMenuImagesForRestaurant } from "@/lib/menu-images";
 import { createPageMetadata } from "@/components/seo/MetaTags";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { parseMenuData } from "@/lib/menu-data";
@@ -40,6 +42,7 @@ export default async function RestaurantMenuPage({ params }: PageProps) {
   if (!row) notFound();
 
   const menuData = parseMenuData(row.menu_data);
+  const menuImages = parseMenuImagesForRestaurant(row);
   const site = getSiteUrl();
   const menuUrl = restaurantCanonicalUrl(restaurant, "/menu");
 
@@ -75,6 +78,7 @@ export default async function RestaurantMenuPage({ params }: PageProps) {
         </div>
       </div>
       <MenuSection restaurant={row} menuData={menuData} suppressTitle />
+      <MenuImagesGallery urls={menuImages} restaurantName={row.name} />
     </>
   );
 }

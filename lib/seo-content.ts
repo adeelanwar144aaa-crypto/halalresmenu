@@ -1,3 +1,6 @@
+// NOTE: SEO content generation disabled after August 2026 spam update cleanup.
+// Functions kept for reference but no longer called from components.
+
 import type { SeoContent } from "@/types/restaurant";
 
 export function parseSeoContent(raw: unknown): SeoContent | null {

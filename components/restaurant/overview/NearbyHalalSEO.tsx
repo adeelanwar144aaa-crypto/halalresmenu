@@ -105,8 +105,7 @@ async function NearbyHalalSEOContent({
           Other halal restaurants nearby
         </h2>
         <p className="mt-3 max-w-2xl text-lg text-zinc-600">
-          Explore more certified-friendly venues nearby — ideal for internal
-          discovery and search engines.
+          Explore more halal-friendly restaurants nearby.
         </p>
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {rows.length === 0 ? (

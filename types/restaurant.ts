@@ -88,6 +88,10 @@ export type Restaurant = {
   public_transport_info?: string | null;
   /** AI or scraped menu (jsonb) */
   menu_data?: MenuData | Record<string, unknown> | null;
+  /** Public URLs of menu page images (R2), jsonb string array */
+  menu_images?: string[] | null;
+  /** When manual/R2 menu images were uploaded */
+  images_uploaded_at?: string | null;
   /** AI-generated SEO copy (jsonb) */
   seo_content?: SeoContent | Record<string, unknown> | null;
   /** Per-subdomain theme (hex). Assigned by cuisine+name hash if null. */
@@ -125,6 +129,9 @@ export type MenuDataCategory = {
 export type MenuData = {
   source: string;
   categories: MenuDataCategory[];
+  /** R2 public URLs when menu_images column unavailable or mirrored here */
+  image_urls?: string[];
+  images_uploaded_at?: string;
 };
 
 export type MenuCategory = {
