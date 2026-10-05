@@ -8,7 +8,6 @@ import {
   PhotoGalleryPlaceholder,
 } from "@/components/restaurant/PhotoGallery";
 import { PrayerTimes } from "@/components/restaurant/PrayerTimes";
-import { AboutArticle } from "@/components/restaurant/overview/AboutArticle";
 import { HalalArticleBlock } from "@/components/restaurant/overview/HalalArticleBlock";
 import { LocationFindUs } from "@/components/restaurant/overview/LocationFindUs";
 import { MenuHighlights } from "@/components/restaurant/overview/MenuHighlights";
@@ -127,7 +126,6 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
         reviewCount={displayReviewCount}
         openStatus={openStatus}
       />
-      <AboutArticle restaurant={row} />
       {galleryUrls.length > 0 ? (
         <PhotoGallery
           photoUrls={galleryUrls}
