@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HomeSchema } from "@/components/seo/HomeSchema";
 import { FeaturedCities } from "@/components/home/FeaturedCities";
+import { getApexOrigin } from "@/lib/sitemap-data";
 import { HomeHeroSearch } from "@/components/home/HomeHeroSearch";
 import {
   HomeBrowseMenus,
@@ -18,16 +20,25 @@ import {
 /** Keep in sync with `CACHE_TTL.HOME_AND_CITY` in lib/cache-config.ts */
 export const revalidate = 3600;
 
+const canonical = getApexOrigin();
+
 export const metadata: Metadata = {
   title:
     "Discover Halal Restaurants Across the UK | Menus, Reviews & Locations",
   description:
     "Find halal restaurants near you across the UK. Browse menus, opening hours, delivery options, and trusted dining information on HalalResMenu.",
+  alternates: { canonical },
+  openGraph: {
+    url: canonical,
+    siteName: "HalalResMenu",
+    type: "website",
+  },
 };
 
 export default function HomePage() {
   return (
     <>
+      <HomeSchema />
       <section className="relative overflow-hidden bg-gradient-to-b from-halal-950 via-halal-900 to-halal-800 text-white">
         <div
           className="pointer-events-none absolute inset-0 opacity-30"

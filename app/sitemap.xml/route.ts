@@ -4,7 +4,9 @@ import {
   buildApexSitemapIndexEntries,
   buildRestaurantSitemapEntries,
   fetchAllRestaurantSlugs,
+  fetchCityLastModifiedMap,
   fetchRestaurantSitemapRow,
+  latestDateFromRows,
   SITEMAP_CACHE_HEADERS,
 } from "@/lib/sitemap-data";
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
@@ -26,8 +28,20 @@ export async function GET(request: Request) {
     return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });
   }
 
-  const restaurants = await fetchAllRestaurantSlugs();
-  const index = buildApexSitemapIndexEntries(restaurants);
+  const [restaurants, cityLastMap] = await Promise.all([
+    fetchAllRestaurantSlugs(),
+    fetchCityLastModifiedMap(),
+  ]);
+  let citySitemapLastModified: Date | undefined;
+  for (const d of cityLastMap.values()) {
+    if (!citySitemapLastModified || d > citySitemapLastModified) {
+      citySitemapLastModified = d;
+    }
+  }
+  const index = buildApexSitemapIndexEntries(restaurants, {
+    siteLastModified: latestDateFromRows(restaurants),
+    citySitemapLastModified,
+  });
   const xml = sitemapIndexToXml(index);
 
   return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });

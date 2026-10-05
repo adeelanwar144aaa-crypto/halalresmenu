@@ -2,6 +2,7 @@ export const runtime = "edge";
 
 import {
   buildCitySitemapEntries,
+  fetchCityLastModifiedMap,
   fetchDistinctCitySlugs,
   SITEMAP_CACHE_HEADERS,
 } from "@/lib/sitemap-data";
@@ -16,8 +17,13 @@ export async function GET(request: Request) {
     return new Response("Not found", { status: 404 });
   }
 
-  const cities = await fetchDistinctCitySlugs();
-  const xml = sitemapToXml(buildCitySitemapEntries(cities));
+  const [cities, lastModifiedByCity] = await Promise.all([
+    fetchDistinctCitySlugs(),
+    fetchCityLastModifiedMap(),
+  ]);
+  const xml = sitemapToXml(
+    buildCitySitemapEntries(cities, lastModifiedByCity)
+  );
 
   return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });
 }

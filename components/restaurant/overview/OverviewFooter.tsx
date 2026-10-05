@@ -1,9 +1,11 @@
 import type { Restaurant } from "@/types/restaurant";
+import {
+  formatContentUpdatedLabel,
+  restaurantContentUpdatedAt,
+} from "@/lib/restaurant-freshness";
 
 export function OverviewFooter({ restaurant }: { restaurant: Restaurant }) {
-  const updated = restaurant.updated_at
-    ? new Date(restaurant.updated_at).toLocaleDateString()
-    : new Date().toLocaleDateString();
+  const contentUpdated = restaurantContentUpdatedAt(restaurant);
 
   return (
     <footer className="border-t border-halal-100/80 bg-white py-12">
@@ -22,7 +24,11 @@ export function OverviewFooter({ restaurant }: { restaurant: Restaurant }) {
             Report incorrect information
           </a>
         </div>
-        <p className="mt-6 text-xs text-zinc-500">Last updated: {updated}</p>
+        {contentUpdated ? (
+          <p className="mt-6 text-xs text-zinc-500">
+            Last updated: {formatContentUpdatedLabel(contentUpdated)}
+          </p>
+        ) : null}
         <p className="mt-4 text-sm leading-relaxed text-zinc-600">
           Information is sourced from public listings and partner data. Halal
           practices can change — please call the restaurant and confirm before

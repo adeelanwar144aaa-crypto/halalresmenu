@@ -6,10 +6,12 @@ export function PhotoGallery({
   photoUrls,
   slug,
   restaurantName,
+  city,
 }: {
   photoUrls: string[];
   slug: string;
   restaurantName: string;
+  city?: string | null;
 }) {
   if (photoUrls.length === 0) return null;
 
@@ -17,6 +19,7 @@ export function PhotoGallery({
     <PhotoGallerySlider
       photoUrls={photoUrls}
       restaurantName={restaurantName}
+      city={city}
     />
   );
 }

@@ -2,6 +2,8 @@ export const runtime = "edge";
 
 import {
   buildMainSiteSitemapEntries,
+  fetchAllRestaurantSlugs,
+  latestDateFromRows,
   SITEMAP_CACHE_HEADERS,
 } from "@/lib/sitemap-data";
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
@@ -16,6 +18,10 @@ export async function GET(request: Request) {
     return new Response("Not found", { status: 404 });
   }
 
-  const xml = sitemapToXml(buildMainSiteSitemapEntries());
+  const restaurants = await fetchAllRestaurantSlugs();
+  const siteLastModified = latestDateFromRows(restaurants);
+  const xml = sitemapToXml(
+    buildMainSiteSitemapEntries(siteLastModified)
+  );
   return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });
 }

@@ -138,6 +138,7 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
           photoUrls={galleryUrls}
           slug={restaurant}
           restaurantName={restaurantName}
+          city={row.city}
         />
       ) : (
         <PhotoGalleryPlaceholder

@@ -44,12 +44,25 @@ function ChevronRightIcon() {
   );
 }
 
+function photoAltText(
+  restaurantName: string,
+  city: string | null | undefined,
+  index: number
+): string {
+  const place = city?.trim()
+    ? `${restaurantName} in ${city.trim()}`
+    : restaurantName;
+  return `${place} – photo ${index + 1}`;
+}
+
 export function PhotoGallerySlider({
   photoUrls,
   restaurantName,
+  city,
 }: {
   photoUrls: string[];
   restaurantName: string;
+  city?: string | null;
 }) {
   const photos = photoUrls.slice(0, MAX_PHOTOS);
   const total = photos.length;
@@ -167,7 +180,7 @@ export function PhotoGallerySlider({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
-                      alt={`${restaurantName} — photo ${i + 1}`}
+                      alt={photoAltText(restaurantName, city, i)}
                       className="h-full w-full object-cover"
                       loading={i < VISIBLE_COUNT ? "eager" : "lazy"}
                       decoding="async"

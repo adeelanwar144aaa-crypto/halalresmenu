@@ -5,6 +5,8 @@ import type {
   Review,
 } from "@/types/restaurant";
 import { normalizeOpeningHours } from "@/lib/opening-hours-display";
+import { restaurantContentUpdatedAt } from "@/lib/restaurant-freshness";
+import { parseRestaurantPhotosJson } from "@/lib/restaurant-photos";
 
 type Breadcrumb = { name: string; url: string };
 
@@ -274,11 +276,19 @@ function buildRestaurantNode(
     restaurant.opening_hours
   );
 
+  const photoUrls = parseRestaurantPhotosJson(restaurant.photos).slice(0, 10);
+  const contentUpdated = restaurantContentUpdatedAt(restaurant);
+  const dateModified = contentUpdated
+    ? contentUpdated.toISOString().slice(0, 10)
+    : undefined;
+
   return stripUndefined({
     "@type": ["Restaurant", "FoodEstablishment", "LocalBusiness"],
     "@id": url,
     name: restaurant.name,
     url,
+    image: photoUrls.length > 0 ? photoUrls : undefined,
+    dateModified,
     telephone: restaurant.phone ?? undefined,
     email: restaurant.email ?? undefined,
     address: restaurant.address

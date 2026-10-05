@@ -16,6 +16,10 @@ import {
   isRestaurantPathname,
   parseRestaurantPath,
 } from "@/lib/restaurant-route";
+import {
+  setSecurityAndSeoHeaders,
+  wwwApexRedirectUrl,
+} from "@/lib/response-headers";
 import { getApexOrigin } from "@/lib/sitemap-data";
 import {
   checkRestaurantSlugViaRest,
@@ -68,6 +72,14 @@ function redirect301(destination: string): NextResponse {
   return NextResponse.redirect(destination, 301);
 }
 
+function finalizeResponse(
+  request: NextRequest,
+  response: NextResponse
+): NextResponse {
+  setSecurityAndSeoHeaders(response.headers, hostnameOnly(requestHost(request)));
+  return response;
+}
+
 function forwardWithPathname(
   request: NextRequest,
   pathname: string,
@@ -90,8 +102,16 @@ export async function middleware(request: NextRequest) {
   const host = requestHost(request);
   const pathNorm = pathname.replace(/\/$/, "") || "/";
 
+  const wwwTarget = wwwApexRedirectUrl(
+    hostnameOnly(host),
+    `${pathname}${request.nextUrl.search}`
+  );
+  if (wwwTarget && isApexHost(host)) {
+    return finalizeResponse(request, redirect301(wwwTarget));
+  }
+
   if (pathname.startsWith("/invalid-subdomain")) {
-    return forwardWithPathname(request, pathname);
+    return finalizeResponse(request, forwardWithPathname(request, pathname));
   }
 
   if (
@@ -100,7 +120,10 @@ export async function middleware(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/sitemap.xml";
-    return forwardWithPathname(request, "/sitemap.xml", { rewrite: url });
+    return finalizeResponse(
+      request,
+      forwardWithPathname(request, "/sitemap.xml", { rewrite: url })
+    );
   }
 
   if (
@@ -114,14 +137,17 @@ export async function middleware(request: NextRequest) {
     pathname === "/privacy" ||
     pathname.startsWith("/terms-conditions")
   ) {
-    return forwardWithPathname(request, pathname);
+    return finalizeResponse(request, forwardWithPathname(request, pathname));
   }
 
   const slug = resolveRestaurantSlug(request);
 
   if (slug) {
     if (pathNorm === "/-Home") {
-      return redirect301(restaurantSubdomainUrl(slug));
+      return finalizeResponse(
+        request,
+        redirect301(restaurantSubdomainUrl(slug))
+      );
     }
 
     if (pathNorm === "/city-Cities") {
@@ -129,7 +155,7 @@ export async function middleware(request: NextRequest) {
       const target = city
         ? restaurantCityHubUrl(city)
         : `${getApexOrigin()}/city`;
-      return redirect301(target);
+      return finalizeResponse(request, redirect301(target));
     }
 
     const slugResult = await checkRestaurantSlugViaRest(slug);
@@ -141,10 +167,11 @@ export async function middleware(request: NextRequest) {
       if (deadRedirect) {
         return redirect301(deadRedirect);
       }
-      return forwardWithPathname(
+      return finalizeResponse(
         request,
-        "/invalid-subdomain",
-        { rewrite: new URL("/invalid-subdomain", request.url) }
+        forwardWithPathname(request, "/invalid-subdomain", {
+          rewrite: new URL("/invalid-subdomain", request.url),
+        })
       );
     }
 
@@ -156,7 +183,10 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-hrm-restaurant-slug", slug);
     requestHeaders.set("x-hrm-pathname", url.pathname);
 
-    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    return finalizeResponse(
+      request,
+      NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+    );
   }
 
   if (shouldRedirectApexRestaurantToSubdomain(host)) {
@@ -165,7 +195,7 @@ export async function middleware(request: NextRequest) {
       const destination = legacyTarget.startsWith("http")
         ? legacyTarget
         : `${getApexOrigin()}${legacyTarget}`;
-      return redirect301(destination);
+      return finalizeResponse(request, redirect301(destination));
     }
 
     if (isRestaurantPathname(pathname)) {
@@ -173,20 +203,21 @@ export async function middleware(request: NextRequest) {
       if (parsed) {
         const slugResult = await checkRestaurantSlugViaRest(parsed.slug);
         if (slugResult === "exists") {
-          return redirect301(
-            restaurantSubdomainUrl(parsed.slug, parsed.suffix)
+          return finalizeResponse(
+            request,
+            redirect301(restaurantSubdomainUrl(parsed.slug, parsed.suffix))
           );
         }
 
         const deadRedirect = getDeadSubdomainRedirect(parsed.slug);
         if (deadRedirect) {
-          return redirect301(deadRedirect);
+          return finalizeResponse(request, redirect301(deadRedirect));
         }
       }
     }
   }
 
-  return forwardWithPathname(request, pathname);
+  return finalizeResponse(request, forwardWithPathname(request, pathname));
 }
 
 export const config = {
