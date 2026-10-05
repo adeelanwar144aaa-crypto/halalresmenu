@@ -2,9 +2,19 @@ import { parseJsonField } from "@/lib/parse-json-field";
 import type { Restaurant } from "@/types/restaurant";
 
 function urlsFromRaw(raw: unknown): string[] {
-  const parsed = parseJsonField<unknown>(raw);
-  if (!Array.isArray(parsed)) return [];
-  return parsed
+  if (raw == null) return [];
+  let value: unknown = raw;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
+    try {
+      value = JSON.parse(trimmed);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+  return value
     .map((entry) => String(entry ?? "").trim())
     .filter((url) => /^https?:\/\//i.test(url));
 }
