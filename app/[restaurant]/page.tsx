@@ -31,7 +31,7 @@ import {
   fetchRestaurantPhotos,
   fetchRestaurantReviews,
 } from "@/lib/supabase";
-import { getSiteUrl, restaurantCanonicalUrl } from "@/lib/utils";
+import { restaurantCanonicalUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
@@ -77,7 +77,6 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   const menuData = parseMenuData(row.menu_data);
 
-  const site = getSiteUrl();
   const canonical = restaurantCanonicalUrl(restaurant);
   const reviewSummary = resolveRestaurantReviewSummary(row, reviews);
   const { reviews: googleReviews } = reviewSummary;
@@ -117,10 +116,6 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
       <OverviewSchema
         restaurant={row}
         url={canonical}
-        breadcrumbs={[
-          { name: "Home", url: site },
-          { name: restaurantName, url: canonical },
-        ]}
         reviews={schemaReviews}
         menuSample={menuSample}
       />

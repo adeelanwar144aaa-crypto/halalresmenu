@@ -9,7 +9,7 @@ import {
 import { createPageMetadata } from "@/components/seo/MetaTags";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
-import { getSiteUrl, restaurantCanonicalUrl } from "@/lib/utils";
+import { restaurantCanonicalUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
@@ -38,22 +38,11 @@ export default async function HalalInfoPage({ params }: PageProps) {
   const row = await fetchRestaurantBySlug(restaurant);
   if (!row) notFound();
 
-  const site = getSiteUrl();
+  const canonical = restaurantCanonicalUrl(restaurant);
 
   return (
     <>
-      <SchemaMarkup
-        restaurant={row}
-        url={restaurantCanonicalUrl(restaurant, "/halal-info")}
-        breadcrumbs={[
-          { name: "Home", url: site },
-          { name: row.name, url: restaurantCanonicalUrl(restaurant) },
-          {
-            name: "Halal info",
-            url: restaurantCanonicalUrl(restaurant, "/halal-info"),
-          },
-        ]}
-      />
+      <SchemaMarkup restaurant={row} url={canonical} />
       <div className="border-b border-halal-100/60 bg-gradient-to-r from-halal-50/50 via-white to-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           {hasTakeaway(row) ? (

@@ -12,7 +12,7 @@ import { createPageMetadata } from "@/components/seo/MetaTags";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { parseMenuData } from "@/lib/menu-data";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
-import { getSiteUrl, restaurantCanonicalUrl } from "@/lib/utils";
+import { restaurantCanonicalUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
@@ -43,22 +43,13 @@ export default async function RestaurantMenuPage({ params }: PageProps) {
 
   const menuData = parseMenuData(row.menu_data);
   const menuImages = parseMenuImagesForRestaurant(row);
-  const site = getSiteUrl();
-  const menuUrl = restaurantCanonicalUrl(restaurant, "/menu");
+  const canonical = restaurantCanonicalUrl(restaurant);
 
   return (
     <>
       <SchemaMarkup
         restaurant={row}
-        url={menuUrl}
-        breadcrumbs={[
-          { name: "Home", url: site },
-          { name: row.name, url: restaurantCanonicalUrl(restaurant) },
-          {
-            name: "Menu",
-            url: menuUrl,
-          },
-        ]}
+        url={canonical}
         menuData={menuData}
       />
       <div className="border-b border-halal-100/60 bg-gradient-to-r from-halal-50/50 via-white to-white">

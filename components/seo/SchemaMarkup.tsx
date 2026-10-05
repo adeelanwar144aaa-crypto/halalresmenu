@@ -7,8 +7,10 @@ import type {
 import { normalizeOpeningHours } from "@/lib/opening-hours-display";
 import { restaurantContentUpdatedAt } from "@/lib/restaurant-freshness";
 import { parseRestaurantPhotosJson } from "@/lib/restaurant-photos";
-
-type Breadcrumb = { name: string; url: string };
+import {
+  normalizeAddressCountry,
+  normalizeSchemaTelephone,
+} from "@/lib/schema-normalize";
 
 const WEEK_DAY_KEYS = [
   "monday",
@@ -289,14 +291,14 @@ function buildRestaurantNode(
     url,
     image: photoUrls.length > 0 ? photoUrls : undefined,
     dateModified,
-    telephone: restaurant.phone ?? undefined,
+    telephone: normalizeSchemaTelephone(restaurant.phone),
     email: restaurant.email ?? undefined,
     address: restaurant.address
       ? {
           "@type": "PostalAddress",
           streetAddress: restaurant.address,
           addressLocality: restaurant.city ?? undefined,
-          addressCountry: restaurant.country ?? undefined,
+          addressCountry: normalizeAddressCountry(restaurant.country),
         }
       : undefined,
     geo:
@@ -315,18 +317,6 @@ function buildRestaurantNode(
     aggregateRating,
     review: nestedReviews,
   }) as Record<string, unknown>;
-}
-
-function buildBreadcrumbNode(breadcrumbs: Breadcrumb[]): Record<string, unknown> {
-  return {
-    "@type": "BreadcrumbList",
-    itemListElement: breadcrumbs.map((b, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: b.name,
-      item: b.url,
-    })),
-  };
 }
 
 function buildMenuListNode(
@@ -378,15 +368,14 @@ function buildFaqNode(restaurant: Restaurant): Record<string, unknown> {
 export function buildRestaurantSchemaGraph({
   restaurant,
   url,
-  breadcrumbs,
   reviews = [],
   menuSample = [],
   menuData = null,
   includeFaq = false,
 }: {
   restaurant: Restaurant;
+  /** Canonical restaurant overview URL (stable @id across overview, menu, halal-info). */
   url: string;
-  breadcrumbs: Breadcrumb[];
   reviews?: Review[];
   menuSample?: MenuDataItem[];
   /** When set, emit a full Schema.org Menu linked via Restaurant.hasMenu. */
@@ -401,7 +390,6 @@ export function buildRestaurantSchemaGraph({
     buildRestaurantNode(restaurant, url, reviews, {
       hasMenuId: fullMenu ? menuId : undefined,
     }),
-    buildBreadcrumbNode(breadcrumbs),
   ];
 
   if (fullMenu) {
@@ -422,7 +410,6 @@ export function buildRestaurantSchemaGraph({
 export function SchemaMarkup({
   restaurant,
   url,
-  breadcrumbs,
   reviews = [],
   menuSample = [],
   menuData = null,
@@ -430,7 +417,6 @@ export function SchemaMarkup({
 }: {
   restaurant: Restaurant;
   url: string;
-  breadcrumbs: Breadcrumb[];
   reviews?: Review[];
   menuSample?: MenuDataItem[];
   menuData?: MenuData | null;
@@ -439,7 +425,6 @@ export function SchemaMarkup({
   const schema = buildRestaurantSchemaGraph({
     restaurant,
     url,
-    breadcrumbs,
     reviews,
     menuSample,
     menuData,
