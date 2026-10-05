@@ -29,6 +29,16 @@
 *.pem
 .env*.local
 
+# upload pipeline (local data, not for git)
+/scripts/logs/
+/scripts/restaurant-lists/
+*.zip
+upload.log
+dry-run.log
+preview-*.json
+summary-content-*.json
+scripts/all-restaurants.csv
+
 # debug
 npm-debug.log*
 yarn-debug.log*
