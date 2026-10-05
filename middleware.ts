@@ -129,6 +129,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
+    pathname === "/ads.txt" ||
+    pathname === "/ads.txt/" ||
     pathname === "/robots.txt" ||
     pathname.startsWith("/sitemap") ||
     pathname.startsWith("/sitemaps/") ||
@@ -221,7 +223,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|api/).*)"],
+  matcher: ["/((?!_next/static|_next/image|api/|ads\\.txt).*)"],
 };
 
 // Re-export for tests and sitemap-host (prefer importing from lib/host-routing)

@@ -9,6 +9,7 @@ import {
   themeFromRestaurant,
   themeToCssProperties,
 } from "@/lib/restaurant-theme";
+import { ADSENSE_SCRIPT_SRC, shouldLoadAdSense } from "@/lib/adsense";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import "./globals.css";
 
@@ -55,6 +56,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const hdrs = await headers();
+  const host =
+    hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
+  const loadAdSense = shouldLoadAdSense(host);
   const restaurantSlug = hdrs.get("x-hrm-restaurant-slug");
 
   let themeStyle: CSSProperties | undefined;
@@ -76,6 +80,15 @@ export default async function RootLayout({
       className={isRestaurantTheme ? "restaurant-theme" : undefined}
       style={themeStyle}
     >
+      <head>
+        {loadAdSense ? (
+          <script
+            async
+            src={ADSENSE_SCRIPT_SRC}
+            crossOrigin="anonymous"
+          />
+        ) : null}
+      </head>
       <body className="min-h-screen font-sans antialiased">
         <SiteChrome>{children}</SiteChrome>
         <GoogleAnalytics gaId="G-LMCL7BMSJR" />

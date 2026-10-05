@@ -7,6 +7,8 @@ const RESERVED_SEGMENTS = new Set([
   "city",
   "sitemaps",
   "sitemap_index.xml",
+  "ads.txt",
+  "robots.txt",
   "about",
   "contact",
   "privacy",
@@ -21,7 +23,14 @@ export function isRestaurantPathname(pathname: string): boolean {
   if (path === "/" || path === "/search" || path.startsWith("/invalid-subdomain")) {
     return false;
   }
-  if (path.startsWith("/sitemap") || path.startsWith("/city")) return false;
+  if (
+    path.startsWith("/sitemap") ||
+    path.startsWith("/city") ||
+    path === "/ads.txt" ||
+    path === "/robots.txt"
+  ) {
+    return false;
+  }
   if (
     path === "/about" ||
     path === "/contact" ||
