@@ -44,6 +44,8 @@ const {
 } = require("../lib/r2");
 
 const MENU_ROOT_RE = /^restaurant-menus(-\d+)?$/;
+const ZIP_NAME_RE =
+  /^(with-photos-part\d+|uk-restaurants-batch-\d+-part\d+)\.zip$/i;
 const CONCURRENCY = 5;
 const MAX_RETRIES = 3;
 const CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -62,7 +64,7 @@ const LIMIT = (() => {
 
 const ZIP_GLOB_DIR =
   process.env.MENU_ZIP_DIR?.trim() ||
-  path.join(process.env.USERPROFILE || "", "Downloads");
+  path.join(process.env.USERPROFILE || "", "Downloads", "menu 2");
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -89,13 +91,27 @@ function listZipFiles(dir) {
   }
   return fs
     .readdirSync(dir)
-    .filter((f) => /^with-photos-part\d+\.zip$/i.test(f))
+    .filter((f) => ZIP_NAME_RE.test(f))
     .map((f) => path.join(dir, f))
     .sort((a, b) => {
       const na = parseInt(a.match(/part(\d+)/i)?.[1] || "0", 10);
       const nb = parseInt(b.match(/part(\d+)/i)?.[1] || "0", 10);
       return na - nb;
     });
+}
+
+/** Zip layouts: restaurant-menus/Name/file or Name/file (batch-02). */
+function parseZipEntryPath(entryName) {
+  const parts = entryName.replace(/\\/g, "/").split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+
+  if (parts.length >= 3 && MENU_ROOT_RE.test(parts[0])) {
+    return { restaurantName: parts[1], relativePath: parts.slice(2).join("/") };
+  }
+  if (parts.length === 2) {
+    return { restaurantName: parts[0], relativePath: parts[1] };
+  }
+  return null;
 }
 
 function indexRestaurantFolders(zipPaths) {
@@ -105,11 +121,10 @@ function indexRestaurantFolders(zipPaths) {
     const zip = new AdmZip(zipPath);
     for (const entry of zip.getEntries()) {
       if (entry.isDirectory) continue;
-      const parts = entry.entryName.replace(/\\/g, "/").split("/");
-      if (parts.length < 3 || !MENU_ROOT_RE.test(parts[0])) continue;
+      const parsed = parseZipEntryPath(entry.entryName);
+      if (!parsed) continue;
 
-      const restaurantName = parts[1];
-      const relativePath = parts.slice(2).join("/");
+      const { restaurantName, relativePath } = parsed;
 
       if (!byName.has(restaurantName)) {
         byName.set(restaurantName, emptyBucket());
@@ -119,6 +134,10 @@ function indexRestaurantFolders(zipPaths) {
 
       if (kind === "menu_txt") {
         bucket.menuTxt = entry.getData().toString("utf8");
+        continue;
+      }
+      if (kind === "about_txt") {
+        bucket.aboutTxt = entry.getData().toString("utf8");
         continue;
       }
       if (kind === "metadata") {
@@ -208,7 +227,7 @@ async function main() {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   let restaurantSelect =
-    "id, slug, name, city, address, postcode, phone, google_place_id, photos, menu_data, photos_backup, menu_data_backup, images_uploaded_at";
+    "id, slug, name, city, address, postcode, phone, google_place_id, photos, menu_data, photos_backup, menu_data_backup, images_uploaded_at, about_raw";
   const { error: backupProbeErr } = await supabase
     .from("restaurants")
     .select("photos_backup, menu_data_backup")
@@ -224,12 +243,24 @@ async function main() {
   const imagesUploadedAtReady = !(
     uploadedAtErr && /images_uploaded_at/i.test(uploadedAtErr.message)
   );
+  const { error: aboutRawErr } = await supabase
+    .from("restaurants")
+    .select("about_raw")
+    .limit(1);
+  const aboutRawReady = !(
+    aboutRawErr && /about_raw/i.test(aboutRawErr.message)
+  );
   if (!backupReady) {
     console.warn(
       "photos_backup / menu_data_backup missing — uploading without DB backups (run add-photos-menu-backup-columns.sql)."
     );
     restaurantSelect =
       "id, slug, name, city, address, postcode, phone, google_place_id, photos, menu_data";
+  }
+  if (!aboutRawReady) {
+    console.warn(
+      "about_raw missing — about.txt will upload to R2 only (run add-about-content-columns.sql)."
+    );
   }
 
   const zipPaths = listZipFiles(ZIP_GLOB_DIR);
@@ -272,6 +303,8 @@ async function main() {
     photosUploaded: 0,
     menusReplaced: 0,
     menusKept: 0,
+    aboutTxtFound: 0,
+    aboutTxtSaved: 0,
     matchedExact: 0,
     matchedFuzzy: 0,
     fuzzyAccepted: 0,
@@ -367,13 +400,16 @@ async function main() {
 
     const itemCount = parsed.itemCount ?? countMenuItems(parsed.menuData);
     const menuOk = parsed.ok && itemCount >= MIN_MENU_ITEMS;
+    const hasAbout = Boolean(local.aboutTxt?.trim());
+    if (hasAbout) summary.aboutTxtFound++;
 
     if (DRY_RUN) {
       console.log(
-        `[${processedCount}/${totalTarget}] ${row.name} (${row.slug}) — ${local.restaurantPhotos.length} photos, menu ${menuOk ? `${itemCount} items` : "skip"}`
+        `[${processedCount}/${totalTarget}] ${row.name} (${row.slug}) — ${local.restaurantPhotos.length} photos, menu ${menuOk ? `${itemCount} items` : "skip"}, about ${hasAbout ? "yes" : "no"}`
       );
       if (menuOk) summary.menusReplaced++;
       else summary.menusKept++;
+      if (hasAbout) summary.aboutTxtSaved++;
       summary.photosUploaded += local.restaurantPhotos.length;
       summary.restaurantsUpdated++;
       continue;
@@ -422,11 +458,31 @@ async function main() {
         );
       }
 
+      if (local.aboutTxt?.trim()) {
+        const aboutKey = `restaurants/${row.slug}/about.txt`;
+        await withRetry(
+          () =>
+            putObject(
+              r2.client,
+              r2.bucket,
+              aboutKey,
+              Buffer.from(local.aboutTxt.trim(), "utf8"),
+              "text/plain; charset=utf-8",
+              CACHE_CONTROL
+            ),
+          `put ${aboutKey}`
+        );
+      }
+
       const uploadedAt = new Date().toISOString();
       const update = {
         updated_at: uploadedAt,
         photos: photoUrls,
       };
+      if (aboutRawReady && local.aboutTxt?.trim()) {
+        update.about_raw = local.aboutTxt.trim();
+        summary.aboutTxtSaved++;
+      }
       if (imagesUploadedAtReady) {
         update.images_uploaded_at = uploadedAt;
       }

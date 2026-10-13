@@ -1,3 +1,4 @@
+import { resolveContentGeneratedAt } from "@/lib/resolve-about-content";
 import { parseMenuData } from "@/lib/menu-data";
 import { parseRestaurantPhotosJson } from "@/lib/restaurant-photos";
 type FreshnessRow = {
@@ -5,6 +6,8 @@ type FreshnessRow = {
   menu_data?: unknown;
   updated_at?: string | null;
   images_uploaded_at?: string | null;
+  content_generated_at?: string | null;
+  seo_content?: unknown;
 };
 
 /** True when photos/menu were refreshed by the R2 upload pipeline (or images_uploaded_at is set). */
@@ -22,13 +25,27 @@ export function restaurantHadContentRefresh(row: FreshnessRow): boolean {
 
 /** Last content refresh date for JSON-LD / visible “Last updated” — only when actually refreshed. */
 export function restaurantContentUpdatedAt(row: FreshnessRow): Date | null {
-  if (!restaurantHadContentRefresh(row)) return null;
+  const dates: Date[] = [];
 
-  const uploaded = row.images_uploaded_at?.trim();
-  if (uploaded) {
-    const d = new Date(uploaded);
-    if (!Number.isNaN(d.getTime())) return d;
+  if (restaurantHadContentRefresh(row)) {
+    const uploaded = row.images_uploaded_at?.trim();
+    if (uploaded) {
+      const d = new Date(uploaded);
+      if (!Number.isNaN(d.getTime())) dates.push(d);
+    }
   }
+
+  const generated = resolveContentGeneratedAt(row);
+  if (generated) {
+    const d = new Date(generated);
+    if (!Number.isNaN(d.getTime())) dates.push(d);
+  }
+
+  if (dates.length > 0) {
+    return new Date(Math.max(...dates.map((d) => d.getTime())));
+  }
+
+  if (!restaurantHadContentRefresh(row)) return null;
 
   if (row.updated_at?.trim()) {
     const d = new Date(row.updated_at);

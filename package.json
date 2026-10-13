@@ -40,7 +40,8 @@
     "fix-menu-image-urls": "node scripts/fix-menu-image-urls.js",
     "db:apply-menu-images": "node scripts/apply-menu-images-migration.js",
     "db:menu-images": "node -e \"console.log('Run scripts/migrations/add-menu-images-column.sql in the Supabase SQL editor.')\"",
-    "validate:schema": "tsx scripts/validate-schema.ts"
+    "validate:schema": "tsx scripts/validate-schema.ts",
+    "generate:about": "tsx scripts/generate-about-content.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.7",

@@ -94,6 +94,15 @@ export type Restaurant = {
   images_uploaded_at?: string | null;
   /** AI-generated SEO copy (jsonb) */
   seo_content?: SeoContent | Record<string, unknown> | null;
+  /** Raw about.txt from upload pipeline */
+  about_raw?: string | null;
+  /** Claude-generated guide (intro + sections) */
+  about_content?: Record<string, unknown> | null;
+  seo_title?: string | null;
+  seo_meta_description?: string | null;
+  content_generated_at?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
   /** Per-subdomain theme (hex). Assigned by cuisine+name hash if null. */
   primary_color?: string | null;
   background_color?: string | null;

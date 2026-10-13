@@ -8,7 +8,13 @@ import {
   PhotoGalleryPlaceholder,
 } from "@/components/restaurant/PhotoGallery";
 import { PrayerTimes } from "@/components/restaurant/PrayerTimes";
+import { RestaurantAboutContent } from "@/components/restaurant/overview/RestaurantAboutContent";
 import { HalalArticleBlock } from "@/components/restaurant/overview/HalalArticleBlock";
+import {
+  resolveAboutContent,
+  resolveSeoMetaDescription,
+  resolveSeoTitle,
+} from "@/lib/resolve-about-content";
 import { LocationFindUs } from "@/components/restaurant/overview/LocationFindUs";
 import { MenuHighlights } from "@/components/restaurant/overview/MenuHighlights";
 import { NearbyHalalSEO } from "@/components/restaurant/overview/NearbyHalalSEO";
@@ -59,6 +65,8 @@ export async function generateMetadata({
     address: row.address,
     postcode: row.postcode,
     ogImage,
+    seoTitle: resolveSeoTitle(row),
+    seoMetaDescription: resolveSeoMetaDescription(row),
   });
 }
 
@@ -98,6 +106,7 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   const menuSample = getMenuSchemaSample(menuData);
   const galleryUrls = resolveRestaurantGalleryUrls(row.photos, photos);
+  const aboutContent = resolveAboutContent(row);
 
   const schemaReviews = googleReviews.map((gr, i) => ({
     id: `google-${i}`,
@@ -117,6 +126,7 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
         url={canonical}
         reviews={schemaReviews}
         menuSample={menuSample}
+        description={aboutContent?.intro}
       />
       <HeroSection
         restaurant={row}
@@ -139,6 +149,7 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
           restaurantName={restaurantName}
         />
       )}
+      {aboutContent ? <RestaurantAboutContent content={aboutContent} /> : null}
       <ServiceHighlights restaurant={row} />
       <MenuHighlights restaurant={row} menuData={menuData} />
       <HalalArticleBlock restaurant={row} />

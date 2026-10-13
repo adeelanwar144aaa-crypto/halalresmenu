@@ -11,7 +11,7 @@ import { getSiteUrl, restaurantSubdomainUrl } from "@/lib/utils";
 const PAGE_SIZE = 1000;
 
 const RESTAURANT_SITEMAP_SELECT =
-  "slug, updated_at, photos, menu_data, images_uploaded_at";
+  "slug, updated_at, photos, menu_data, images_uploaded_at, content_generated_at";
 
 export type RestaurantSitemapRow = {
   slug: string;
@@ -19,6 +19,7 @@ export type RestaurantSitemapRow = {
   photos?: unknown;
   menu_data?: unknown;
   images_uploaded_at?: string | null;
+  content_generated_at?: string | null;
 };
 
 export function sitemapLastModifiedForRestaurant(
@@ -69,7 +70,7 @@ export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]>
 
     if (
       full.error &&
-      /images_uploaded_at/i.test(full.error.message ?? "")
+      /images_uploaded_at|content_generated_at/i.test(full.error.message ?? "")
     ) {
       const fallback = await supabase
         .from("restaurants")

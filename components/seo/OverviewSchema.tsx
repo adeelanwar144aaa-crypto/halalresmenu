@@ -7,11 +7,13 @@ export function OverviewSchema({
   url,
   reviews,
   menuSample,
+  description,
 }: {
   restaurant: Restaurant;
   url: string;
   reviews: Review[];
   menuSample: MenuDataItem[];
+  description?: string | null;
 }) {
   return (
     <SchemaMarkup
@@ -19,6 +21,7 @@ export function OverviewSchema({
       url={url}
       reviews={reviews}
       menuSample={menuSample}
+      description={description}
     />
   );
 }

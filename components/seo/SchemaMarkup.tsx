@@ -262,7 +262,7 @@ function buildRestaurantNode(
   restaurant: Restaurant,
   url: string,
   reviews: Review[],
-  opts?: { hasMenuId?: string }
+  opts?: { hasMenuId?: string; description?: string | null }
 ): Record<string, unknown> {
   const sameAs = [restaurant.website].filter(Boolean) as string[];
   const reviewNodes = buildReviewNodes(reviews);
@@ -289,6 +289,7 @@ function buildRestaurantNode(
     "@id": url,
     name: restaurant.name,
     url,
+    description: opts?.description?.trim() || undefined,
     image: photoUrls.length > 0 ? photoUrls : undefined,
     dateModified,
     telephone: normalizeSchemaTelephone(restaurant.phone),
@@ -372,6 +373,7 @@ export function buildRestaurantSchemaGraph({
   menuSample = [],
   menuData = null,
   includeFaq = false,
+  description = null,
 }: {
   restaurant: Restaurant;
   /** Canonical restaurant overview URL (stable @id across overview, menu, halal-info). */
@@ -381,6 +383,7 @@ export function buildRestaurantSchemaGraph({
   /** When set, emit a full Schema.org Menu linked via Restaurant.hasMenu. */
   menuData?: MenuData | null;
   includeFaq?: boolean;
+  description?: string | null;
 }): Record<string, unknown> {
   const menuId = `${url}#menu`;
   const fullMenu =
@@ -389,6 +392,7 @@ export function buildRestaurantSchemaGraph({
   const graph: Record<string, unknown>[] = [
     buildRestaurantNode(restaurant, url, reviews, {
       hasMenuId: fullMenu ? menuId : undefined,
+      description,
     }),
   ];
 
@@ -414,6 +418,7 @@ export function SchemaMarkup({
   menuSample = [],
   menuData = null,
   includeFaq = false,
+  description = null,
 }: {
   restaurant: Restaurant;
   url: string;
@@ -421,6 +426,7 @@ export function SchemaMarkup({
   menuSample?: MenuDataItem[];
   menuData?: MenuData | null;
   includeFaq?: boolean;
+  description?: string | null;
 }) {
   const schema = buildRestaurantSchemaGraph({
     restaurant,
@@ -429,6 +435,7 @@ export function SchemaMarkup({
     menuSample,
     menuData,
     includeFaq,
+    description,
   });
 
   return (

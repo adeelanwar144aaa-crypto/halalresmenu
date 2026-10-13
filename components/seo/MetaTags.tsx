@@ -13,6 +13,8 @@ export type PageMetaInput = {
   address?: string | null;
   postcode?: string | null;
   ogImage?: string | null;
+  seoTitle?: string | null;
+  seoMetaDescription?: string | null;
 };
 
 /** Deterministic 0..n-1 pick from slug (stable across builds). */
@@ -203,7 +205,15 @@ function buildTitleAndDescription(input: PageMetaInput): {
 }
 
 export function createPageMetadata(input: PageMetaInput): Metadata {
-  const { title, description } = buildTitleAndDescription(input);
+  const built = buildTitleAndDescription(input);
+  const title =
+    input.pageType === "overview" && input.seoTitle?.trim()
+      ? input.seoTitle.trim()
+      : built.title;
+  const description =
+    input.pageType === "overview" && input.seoMetaDescription?.trim()
+      ? input.seoMetaDescription.trim()
+      : built.description;
   const canonical = canonicalUrlForPage(input.slug, input.pageType);
 
   return {
