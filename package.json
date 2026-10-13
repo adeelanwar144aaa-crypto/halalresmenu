@@ -39,9 +39,13 @@
     "upload-to-r2": "node scripts/upload-to-r2.js",
     "fix-menu-image-urls": "node scripts/fix-menu-image-urls.js",
     "db:apply-menu-images": "node scripts/apply-menu-images-migration.js",
+    "db:apply-about-content": "node scripts/apply-about-content-migration.js",
     "db:menu-images": "node -e \"console.log('Run scripts/migrations/add-menu-images-column.sql in the Supabase SQL editor.')\"",
     "validate:schema": "tsx scripts/validate-schema.ts",
-    "generate:about": "tsx scripts/generate-about-content.ts"
+    "generate:about": "tsx scripts/generate-about-content.ts",
+    "generate:about:batch": "tsx scripts/generate-about-content.ts --batch-about",
+    "review:about": "tsx scripts/build-about-review-html.ts",
+    "publish:about": "tsx scripts/publish-about-content.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.7",

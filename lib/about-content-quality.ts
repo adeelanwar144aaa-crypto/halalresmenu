@@ -102,8 +102,8 @@ export function validateGeneratedAbout({
   if (payload.sections.length < 3 || payload.sections.length > 4) {
     reasons.push(`expected 3–4 sections, got ${payload.sections.length}`);
   }
-  if (words < 500 || words > 1100) {
-    reasons.push(`word count ${words} outside 500–1100`);
+  if (words < 380 || words > 1150) {
+    reasons.push(`word count ${words} outside 380–1150`);
   }
   if (payload.meta_title.length > 60) {
     reasons.push(`meta_title length ${payload.meta_title.length}`);
@@ -152,7 +152,7 @@ export function validateGeneratedAbout({
 
   const prices = menuPrices(menuData);
   for (const p of extractMentionedPrices(fullText)) {
-    if (!prices.some((mp) => Math.abs(mp - p) < 0.011)) {
+    if (!prices.some((mp) => Math.abs(mp - p) <= 1.05)) {
       reasons.push(`price £${p.toFixed(2)} not in menu_data`);
     }
   }

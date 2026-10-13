@@ -1,11 +1,10 @@
 /**
- * Generate restaurant about_content via Anthropic Message Batches API.
+ * Generate about guide drafts (no Supabase writes). Publish with publish-about-content.ts.
  *
  * Usage:
+ *   npm run generate:about:batch
+ *   npm run generate:about -- --only slug1 --draft
  *   npx tsx scripts/generate-about-content.ts --dry-run --sample
- *   npx tsx scripts/generate-about-content.ts --sample
- *   npx tsx scripts/generate-about-content.ts --slugs=a,b,c
- *   npx tsx scripts/generate-about-content.ts --force
  */
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -19,8 +18,15 @@ import {
   sentenceOverlapRatio,
   validateGeneratedAbout,
 } from "@/lib/about-content-quality";
+import {
+  draftPathForSlug,
+  payloadToDraftFields,
+  writeAboutDraft,
+  type AboutDraftFile,
+} from "@/lib/about-draft";
 import { normalizeOpeningHours } from "@/lib/opening-hours-display";
 import type { Restaurant } from "@/types/restaurant";
+import { execSync } from "child_process";
 
 const MODEL = "claude-haiku-4-5-20251001";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -54,14 +60,24 @@ const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const FORCE = args.includes("--force");
 const SAMPLE = args.includes("--sample");
-const slugArg = args.find((a) => a.startsWith("--slugs="));
-const SLUGS = slugArg
-  ? slugArg
-      .slice("--slugs=".length)
+/** Only restaurants with about_raw from the upload batch (~240). */
+const BATCH_ABOUT = args.includes("--batch-about");
+const DRAFT_MODE = args.includes("--draft");
+
+function parseSlugList(flag: string): string[] | null {
+  const eq = args.find((a) => a.startsWith(`${flag}=`));
+  if (eq) {
+    return eq
+      .slice(flag.length + 1)
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean)
-  : null;
+      .filter(Boolean);
+  }
+  return null;
+}
+
+const SLUGS =
+  parseSlugList("--slugs") ?? parseSlugList("--only") ?? null;
 
 const logsDir = path.resolve(process.cwd(), "scripts/logs");
 fs.mkdirSync(logsDir, { recursive: true });
@@ -109,68 +125,33 @@ function buildUserPayload(row: Restaurant, aboutRaw: string): string {
   );
 }
 
-type SaveMode = "columns" | "legacy";
-
-async function detectSaveMode(
-  supabase: ReturnType<typeof createClient>
-): Promise<SaveMode> {
-  const probe = await supabase.from("restaurants").select("about_content").limit(1);
-  if (probe.error && /about_content/i.test(probe.error.message ?? "")) {
-    return "legacy";
-  }
-  return "columns";
+function hasDraftFile(slug: string): boolean {
+  return fs.existsSync(draftPathForSlug(slug));
 }
 
-async function saveGenerated(
-  supabase: ReturnType<typeof createClient>,
-  mode: SaveMode,
+function writeDraftRecord(
   row: Restaurant,
-  payload: GeneratedAboutPayload,
-  now: string
-): Promise<string | null> {
-  const guide = { intro: payload.intro, sections: payload.sections };
-  if (mode === "columns") {
-    const { error } = await supabase
-      .from("restaurants")
-      .update({
-        about_content: guide,
-        seo_title: payload.meta_title,
-        seo_meta_description: payload.meta_description,
-        content_generated_at: now,
-        updated_at: now,
-      })
-      .eq("id", row.id);
-    return error?.message ?? null;
-  }
-
-  const prev =
-    row.seo_content && typeof row.seo_content === "object"
-      ? (row.seo_content as Record<string, unknown>)
-      : {};
-  const { error } = await supabase
-    .from("restaurants")
-    .update({
-      meta_title: payload.meta_title,
-      meta_description: payload.meta_description,
-      seo_content: {
-        ...prev,
-        guide,
-        content_generated_at: now,
-      },
-      updated_at: now,
-    })
-    .eq("id", row.id);
-  return error?.message ?? null;
-}
-
-function hasExistingGuide(row: Restaurant): boolean {
-  if (row.about_content && typeof row.about_content === "object") return true;
-  const sc = row.seo_content;
-  if (sc && typeof sc === "object") {
-    const guide = (sc as Record<string, unknown>).guide;
-    if (guide && typeof guide === "object") return true;
-  }
-  return false;
+  partial: Partial<AboutDraftFile> & Pick<AboutDraftFile, "quality">
+): void {
+  const base: AboutDraftFile = {
+    slug: row.slug,
+    name: row.name,
+    city: row.city,
+    cuisine_type: row.cuisine_type,
+    generatedAt: new Date().toISOString(),
+    meta_title: null,
+    meta_description: null,
+    intro: null,
+    sections: [],
+    wordCount: 0,
+    quality: partial.quality,
+    source: {
+      about_raw: row.about_raw?.trim() ?? "",
+      menu_json: parseMenuData(row.menu_data),
+    },
+    ...partial,
+  };
+  writeAboutDraft(base);
 }
 
 async function anthropicFetch(apiKey: string, pathname: string, init?: RequestInit) {
@@ -226,12 +207,37 @@ async function createBatch(
 }
 
 async function waitForBatch(apiKey: string, batchId: string) {
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 360; i++) {
     const batch = await anthropicFetch(apiKey, `/v1/messages/batches/${batchId}`);
     if (batch.processing_status === "ended") return batch;
     await new Promise((r) => setTimeout(r, 5000));
   }
   throw new Error("batch timeout");
+}
+
+async function messageOnce(
+  apiKey: string,
+  user: string
+): Promise<{ text: string; usage?: { input_tokens?: number; output_tokens?: number } }> {
+  const body = {
+    model: MODEL,
+    max_tokens: 8192,
+    system: [
+      {
+        type: "text",
+        text: SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: [{ role: "user", content: user }],
+  };
+  const parsed = await anthropicFetch(apiKey, "/v1/messages", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  const text =
+    parsed.content?.map((b: { text?: string }) => b.text || "").join("") || "";
+  return { text, usage: parsed.usage };
 }
 
 async function fetchBatchResults(apiKey: string, batchId: string) {
@@ -358,14 +364,18 @@ async function main() {
 
   const all = await fetchRestaurants(supabase);
   let targets = all.filter(eligible);
-  if (!FORCE) {
-    targets = targets.filter((r) => !hasExistingGuide(r));
+  const skipDrafts = !FORCE && !DRAFT_MODE;
+
+  if (skipDrafts) {
+    targets = targets.filter((r) => !hasDraftFile(r.slug));
   }
   if (SLUGS) {
     const set = new Set(SLUGS);
-    targets = all.filter((r) => set.has(r.slug));
+    targets = all.filter((r) => set.has(r.slug) && eligible(r));
   } else if (SAMPLE) {
     targets = await pickSampleRows(all);
+  } else if (BATCH_ABOUT) {
+    targets = targets.filter((r) => (r.about_raw?.trim().length ?? 0) > 0);
   }
 
   console.log(`Eligible targets: ${targets.length}`);
@@ -381,8 +391,7 @@ async function main() {
   }
 
   fs.writeFileSync(failedLog, "");
-  const saveMode = await detectSaveMode(supabase);
-  console.log("Save mode:", saveMode);
+  console.log("Draft-only mode: writing scripts/drafts/[slug].json (no Supabase updates)");
 
   for (const row of targets) {
     if (!row.about_raw?.trim()) {
@@ -422,7 +431,12 @@ async function main() {
 
     if (line.result?.type === "errored") {
       failed++;
-      fs.appendFileSync(failedLog, `${slug}: API error ${JSON.stringify(line.result.error)}\n`);
+      const errMsg = JSON.stringify(line.result.error);
+      fs.appendFileSync(failedLog, `${slug}: API error ${errMsg}\n`);
+      writeDraftRecord(row, {
+        quality: { pass: false, reasons: [`API error: ${errMsg}`] },
+        error: `API error: ${errMsg}`,
+      });
       continue;
     }
 
@@ -442,7 +456,12 @@ async function main() {
       payload = parseModelJson(text);
     } catch (e) {
       failed++;
-      fs.appendFileSync(failedLog, `${slug}: JSON parse ${String(e)}\n`);
+      const errMsg = String(e);
+      fs.appendFileSync(failedLog, `${slug}: JSON parse ${errMsg}\n`);
+      writeDraftRecord(row, {
+        quality: { pass: false, reasons: [`JSON parse: ${errMsg}`] },
+        error: errMsg,
+      });
       continue;
     }
 
@@ -456,24 +475,18 @@ async function main() {
     });
 
     if (!check.ok) {
-      const retryBatch = await createBatch(apiKey!, [
-        {
-          custom_id: slug,
-          user:
-            buildUserPayload(row, row.about_raw ?? "") +
-            "\n\nFix these issues: " +
-            check.reasons.join("; "),
-        },
-      ]);
-      await waitForBatch(apiKey!, retryBatch.id);
-      const retryResults = await fetchBatchResults(apiKey!, retryBatch.id);
-      const retryLine = retryResults[0];
       try {
-        const retryText =
-          retryLine.result?.message?.content
-            ?.map((b: { text?: string }) => b.text || "")
-            .join("") || "";
-        payload = parseModelJson(retryText);
+        const retry = await messageOnce(
+          apiKey!,
+          buildUserPayload(row, row.about_raw ?? "") +
+            "\n\nFix these issues: " +
+            check.reasons.join("; ")
+        );
+        if (retry.usage) {
+          inputTokens += retry.usage.input_tokens ?? 0;
+          outputTokens += retry.usage.output_tokens ?? 0;
+        }
+        payload = parseModelJson(retry.text);
         check = validateGeneratedAbout({
           payload,
           menuData: menu,
@@ -483,10 +496,18 @@ async function main() {
         });
       } catch (e) {
         failed++;
-        fs.appendFileSync(failedLog, `${slug}: retry failed ${String(e)}\n`);
+        const errMsg = String(e);
+        fs.appendFileSync(failedLog, `${slug}: retry failed ${errMsg}\n`);
+        writeDraftRecord(row, {
+          quality: { pass: false, reasons: [`retry failed: ${errMsg}`] },
+          error: errMsg,
+          ...payloadToDraftFields(payload),
+        });
         continue;
       }
     }
+
+    const fields = payloadToDraftFields(payload);
 
     if (!check.ok) {
       failed++;
@@ -494,6 +515,10 @@ async function main() {
         failedLog,
         `${slug}: quality ${check.reasons.join("; ")}\n`
       );
+      writeDraftRecord(row, {
+        quality: { pass: false, reasons: check.reasons },
+        ...fields,
+      });
       continue;
     }
 
@@ -508,18 +533,26 @@ async function main() {
         );
         skipped++;
         tooSimilar = true;
+        writeDraftRecord(row, {
+          quality: {
+            pass: false,
+            reasons: [`too similar to ${prev.slug}`],
+          },
+          ...fields,
+        });
         break;
       }
     }
     if (tooSimilar) continue;
 
-    const now = new Date().toISOString();
-    const dbErr = await saveGenerated(supabase, saveMode, row, payload, now);
-    if (dbErr) {
-      failed++;
-      fs.appendFileSync(failedLog, `${slug}: DB ${dbErr}\n`);
-      continue;
-    }
+    writeDraftRecord(row, {
+      quality: { pass: true, reasons: [] },
+      meta_title: fields.meta_title,
+      meta_description: fields.meta_description,
+      intro: fields.intro,
+      sections: fields.sections,
+      wordCount: fields.wordCount,
+    });
 
     generated++;
     savedTexts.push({ slug, text: fullText });
@@ -551,6 +584,14 @@ async function main() {
     JSON.stringify(summary, null, 2)
   );
   console.log("\nSummary:", summary);
+  try {
+    execSync("npx tsx scripts/build-about-review-html.ts", {
+      stdio: "inherit",
+      cwd: process.cwd(),
+    });
+  } catch (e) {
+    console.warn("Could not rebuild review.html:", e);
+  }
 }
 
 main().catch((err) => {

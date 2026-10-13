@@ -23,44 +23,44 @@ function r2ImageRemotePattern():
 
 const r2Pattern = r2ImageRemotePattern();
 
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-      {
-        protocol: "https",
-        hostname: "*.googleusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.pexels.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.r2.dev",
-        pathname: "/**",
-      },
-      ...(r2Pattern ? [r2Pattern] : []),
-    ],
-  },
-  experimental: {
-    // disable build cache
-  },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.cache = false;
-    }
-    return config;
-  },
-};
+export default async function nextConfig(): Promise<NextConfig> {
+  if (process.env.NODE_ENV === "development") {
+    await setupDevPlatform();
+  }
 
-if (process.env.NODE_ENV === "development") {
-  await setupDevPlatform();
+  return {
+    reactStrictMode: true,
+    images: {
+      remotePatterns: [
+        {
+          protocol: "https",
+          hostname: "**.supabase.co",
+          pathname: "/storage/v1/object/public/**",
+        },
+        {
+          protocol: "https",
+          hostname: "*.googleusercontent.com",
+        },
+        {
+          protocol: "https",
+          hostname: "images.pexels.com",
+        },
+        {
+          protocol: "https",
+          hostname: "*.r2.dev",
+          pathname: "/**",
+        },
+        ...(r2Pattern ? [r2Pattern] : []),
+      ],
+    },
+    experimental: {
+      // disable build cache
+    },
+    webpack: (config, { isServer }) => {
+      if (isServer) {
+        config.cache = false;
+      }
+      return config;
+    },
+  };
 }
-
-export default nextConfig;

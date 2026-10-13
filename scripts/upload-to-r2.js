@@ -54,6 +54,8 @@ const MIN_MENU_ITEMS = 3;
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const RESUME = args.includes("--resume");
+/** Re-process resume-skipped folders to write about_raw (and R2 about.txt) only. */
+const BACKFILL_ABOUT = args.includes("--backfill-about");
 const LIMIT = (() => {
   const flag = args.find((a) => a.startsWith("--limit"));
   if (!flag) return null;
@@ -324,7 +326,9 @@ async function main() {
   for (const folderName of folderNames) {
     if (LIMIT != null && processedCount >= LIMIT) break;
 
-    if (RESUME && completedFolders.has(folderName)) {
+    const resumeSkip =
+      RESUME && completedFolders.has(folderName) && !BACKFILL_ABOUT;
+    if (resumeSkip) {
       summary.skippedResume++;
       continue;
     }
@@ -416,6 +420,40 @@ async function main() {
     }
 
     try {
+      if (BACKFILL_ABOUT) {
+        if (!local.aboutTxt?.trim()) continue;
+        if (!aboutRawReady) {
+          console.warn("about_raw column missing — cannot backfill");
+          continue;
+        }
+        const aboutKey = `restaurants/${row.slug}/about.txt`;
+        await withRetry(
+          () =>
+            putObject(
+              r2.client,
+              r2.bucket,
+              aboutKey,
+              Buffer.from(local.aboutTxt.trim(), "utf8"),
+              "text/plain; charset=utf-8",
+              CACHE_CONTROL
+            ),
+          `put ${aboutKey}`
+        );
+        const { error: updateErr } = await supabase
+          .from("restaurants")
+          .update({
+            about_raw: local.aboutTxt.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", row.id);
+        if (updateErr) throw new Error(updateErr.message);
+        summary.aboutTxtFound++;
+        summary.aboutTxtSaved++;
+        summary.restaurantsUpdated++;
+        console.log(`[about] ${row.name} (${row.slug}) ✅`);
+        continue;
+      }
+
       const uploadLimit = pLimit(CONCURRENCY);
       const photoUrls = await Promise.all(
         local.restaurantPhotos.map((img, idx) =>

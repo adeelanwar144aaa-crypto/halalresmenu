@@ -8,7 +8,9 @@ const { Client } = require("pg");
 
 async function main() {
   const url =
-    process.env.SUPABASE_DB_URL?.trim() || process.env.DATABASE_URL?.trim();
+    process.env.SUPABASE_DB_URL?.trim() ||
+    process.env.NEW_DATABASE_URL?.trim() ||
+    process.env.DATABASE_URL?.trim();
   if (!url) {
     console.log(
       "Set SUPABASE_DB_URL in .env.local, then re-run. Or paste scripts/migrations/add-about-content-columns.sql in Supabase SQL editor."
