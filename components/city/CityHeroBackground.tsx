@@ -1,3 +1,4 @@
+import { optimizeCityHeroImageSrc } from "@/lib/city-hero-image";
 import { getCityImagePath, isRemoteCityImage } from "@/lib/cityImages";
 
 /** Server-rendered hero image (high priority LCP, no client JS). */
@@ -8,7 +9,7 @@ export function CityHeroBackground({
   slug: string;
   alt: string;
 }) {
-  const src = getCityImagePath(slug);
+  const src = optimizeCityHeroImageSrc(getCityImagePath(slug));
   const remote = isRemoteCityImage(src);
 
   return (

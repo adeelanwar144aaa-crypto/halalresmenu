@@ -248,9 +248,13 @@ function HeroPhotoStack({
         <img
           src={primary}
           alt={`${restaurantName} — main photo`}
+          width={500}
+          height={300}
+          sizes="(max-width: 1024px) 100vw, 500px"
           className="block h-full w-full max-w-full object-cover object-center"
           loading="eager"
           decoding="async"
+          fetchPriority="high"
           referrerPolicy="no-referrer"
         />
       </figure>

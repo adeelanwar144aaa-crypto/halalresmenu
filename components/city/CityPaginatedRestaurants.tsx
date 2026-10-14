@@ -8,7 +8,7 @@ import {
 import { firstRestaurantPhotoFromJson } from "@/lib/restaurant-photos";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
-const EAGER_IMAGE_COUNT = 4;
+const EAGER_IMAGE_COUNT = 0;
 
 export function CityPaginatedRestaurants({
   cityPath,
