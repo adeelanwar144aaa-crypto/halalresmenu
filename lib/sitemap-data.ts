@@ -163,21 +163,34 @@ export async function fetchSitemapIndexData(): Promise<{
 }
 
 /** Max lastmod across all restaurants (for main site urlset). */
-export async function fetchSiteLastModified(): Promise<Date | undefined> {
-  const data = await fetchSitemapRestaurantPages(
-    "updated_at, images_uploaded_at, content_generated_at",
-    "site lastmod fetch"
-  );
-  let latest: Date | undefined;
-  for (const row of data) {
-    const d = latestSitemapDate(
-      row.images_uploaded_at,
-      row.content_generated_at,
-      row.updated_at
-    );
-    if (d && (!latest || d > latest)) latest = d;
+/** Single-row query — avoids scanning ~2k restaurants on edge (CPU limits). */
+export async function fetchMaxRestaurantLastModified(): Promise<Date | undefined> {
+  const supabase = getSupabaseServer();
+  if (!supabase) throw new SupabaseUnavailableError();
+
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select("updated_at, images_uploaded_at, content_generated_at")
+    .not("slug", "is", null)
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throwIfSupabaseUnavailable(error, "max restaurant lastmod");
+    throw error;
   }
-  return latest;
+  if (!data) return undefined;
+
+  return latestSitemapDate(
+    data.images_uploaded_at,
+    data.content_generated_at,
+    data.updated_at
+  );
+}
+
+export async function fetchSiteLastModified(): Promise<Date | undefined> {
+  return fetchMaxRestaurantLastModified();
 }
 
 export async function fetchRestaurantSitemapRow(

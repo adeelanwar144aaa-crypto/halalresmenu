@@ -2,8 +2,9 @@ export const runtime = "edge";
 
 import {
   buildMainSiteSitemapEntries,
-  fetchSiteLastModified,
+  fetchMaxRestaurantLastModified,
 } from "@/lib/sitemap-data";
+import { logSitemapError } from "@/lib/sitemap-route";
 import {
   sitemapFailureResponse,
   sitemapXmlResponse,
@@ -21,7 +22,12 @@ export async function GET(request: Request) {
       return new Response("Not found", { status: 404 });
     }
 
-    const siteLastModified = await fetchSiteLastModified();
+    let siteLastModified: Date | undefined;
+    try {
+      siteLastModified = await fetchMaxRestaurantLastModified();
+    } catch (error) {
+      logSitemapError("sitemap-main lastmod", error);
+    }
     const xml = sitemapToXml(buildMainSiteSitemapEntries(siteLastModified));
     return sitemapXmlResponse(xml);
   } catch (error) {

@@ -3,9 +3,8 @@ export const runtime = "edge";
 import {
   buildApexRootSitemapIndex,
   buildRestaurantSitemapEntries,
+  fetchMaxRestaurantLastModified,
   fetchRestaurantSitemapRow,
-  fetchSitemapIndexData,
-  latestDateFromRows,
 } from "@/lib/sitemap-data";
 import {
   logSitemapError,
@@ -32,27 +31,17 @@ export async function GET(request: Request) {
       return sitemapXmlResponse(xml);
     }
 
-    let citySitemapLastModified: Date | undefined;
-    let restaurantsSitemapLastModified: Date | undefined;
-
     let siteLastModified: Date | undefined;
     try {
-      const data = await fetchSitemapIndexData();
-      for (const d of data.cityLastModified.values()) {
-        if (!citySitemapLastModified || d > citySitemapLastModified) {
-          citySitemapLastModified = d;
-        }
-      }
-      restaurantsSitemapLastModified = latestDateFromRows(data.restaurants);
-      siteLastModified = restaurantsSitemapLastModified;
+      siteLastModified = await fetchMaxRestaurantLastModified();
     } catch (error) {
-      logSitemapError("apex index data fetch", error);
+      logSitemapError("apex index lastmod", error);
     }
 
     const index = buildApexRootSitemapIndex({
       siteLastModified,
-      citySitemapLastModified,
-      restaurantsSitemapLastModified,
+      citySitemapLastModified: siteLastModified,
+      restaurantsSitemapLastModified: siteLastModified,
     });
 
     const xml = sitemapIndexToXml(index);

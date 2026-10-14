@@ -15,10 +15,10 @@ async function loadDeletedRedirects(originHint?: string): Promise<Map<string, st
     if (/localhost|127\.0\.0\.1/i.test(origin)) {
       origin = "https://halalresmenu.com";
     }
-    const url = `${origin}/deleted-redirects.json`;
+    const url = `${origin}/api/deleted-redirects`;
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`deleted-redirects.json ${res.status}`);
+      throw new Error(`deleted-redirects API ${res.status}`);
     }
     const data = (await res.json()) as Record<string, string>;
     map = new Map(
