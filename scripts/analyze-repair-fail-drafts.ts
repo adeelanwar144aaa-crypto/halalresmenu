@@ -31,7 +31,9 @@ function main() {
   const drafts = listAboutDraftFiles();
   const candidates = drafts.filter(
     (d) =>
-      (d.quality?.status === "FAIL" || d.quality?.status === "REVIEW") &&
+      (d.quality?.status === "FAIL" ||
+        d.quality?.status === "REVIEW" ||
+        d.quality?.reasons?.some((r) => r.includes("whether you"))) &&
       d.intro?.trim() &&
       d.sections.length >= 3
   );

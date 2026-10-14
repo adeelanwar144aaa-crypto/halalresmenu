@@ -195,21 +195,47 @@ function trimToMaxChars(text: string, max: number): string {
   return cut.slice(0, max - 1).trim() + "…";
 }
 
+/** Rewrite banned "whether you are / whether you're" without calling the API. */
+export function repairWhetherBannedPhrases(text: string): string {
+  let t = text;
+  t = t.replace(/,\s*whether you are\b/gi, ". If you are");
+  t = t.replace(/,\s*whether you're\b/gi, ". If you're");
+  t = t.replace(/\bwhether you want\b/gi, "if you want");
+  t = t.replace(/\bwhether you're\b/gi, "If you're");
+  t = t.replace(/\bwhether you are\b/gi, "If you are");
+  t = t.replace(/\.\s+If you are if you want/gi, ". If you want");
+  t = t.replace(/\s{2,}/g, " ");
+  return t.trim();
+}
+
+function repairWhetherInPayload(payload: GeneratedAboutPayload): GeneratedAboutPayload {
+  return {
+    meta_title: repairWhetherBannedPhrases(payload.meta_title),
+    meta_description: repairWhetherBannedPhrases(payload.meta_description),
+    intro: repairWhetherBannedPhrases(payload.intro),
+    sections: payload.sections.map((s) => ({
+      heading: s.heading,
+      body: repairWhetherBannedPhrases(s.body),
+    })),
+  };
+}
+
 /** Fix meta length and missing name/city in intro without regenerating. */
 export function repairMinorAboutPayload(
   payload: GeneratedAboutPayload,
   restaurantName: string,
   city: string | null
 ): GeneratedAboutPayload {
-  const meta_title = trimToMaxChars(payload.meta_title, 60);
-  const meta_description = trimToMaxChars(payload.meta_description, 155);
-  let intro = payload.intro;
+  const cleaned = repairWhetherInPayload(payload);
+  const meta_title = trimToMaxChars(cleaned.meta_title, 60);
+  const meta_description = trimToMaxChars(cleaned.meta_description, 155);
+  let intro = cleaned.intro;
 
   const fullText = [
     intro,
     meta_title,
     meta_description,
-    ...payload.sections.map((s) => `${s.heading} ${s.body}`),
+    ...cleaned.sections.map((s) => `${s.heading} ${s.body}`),
   ].join("\n");
   let norm = normalizeForMatch(fullText);
 
@@ -218,7 +244,7 @@ export function repairMinorAboutPayload(
     intro = `${restaurantName}. ${intro}`;
   }
   norm = normalizeForMatch(
-    [intro, meta_title, meta_description, ...payload.sections.map((s) => s.body)].join("\n")
+    [intro, meta_title, meta_description, ...cleaned.sections.map((s) => s.body)].join("\n")
   );
   if (city) {
     const cityNorm = normalizeForMatch(city);
@@ -231,7 +257,7 @@ export function repairMinorAboutPayload(
     meta_title,
     meta_description,
     intro,
-    sections: payload.sections,
+    sections: cleaned.sections,
   };
 }
 

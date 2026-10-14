@@ -51,4 +51,4 @@ yarn-error.log*
 *.tsbuildinfo
 
 # Claude about drafts (local review before publish)
-scripts/drafts/*.json
+scripts/drafts/
