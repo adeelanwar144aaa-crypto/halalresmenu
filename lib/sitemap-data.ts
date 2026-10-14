@@ -377,19 +377,17 @@ export function buildRestaurantSitemapEntries(
   ];
 }
 
-/** Apex sitemap index: main site sitemap + one sitemap per restaurant subdomain. */
-export function buildApexSitemapIndexEntries(
-  restaurants: RestaurantSitemapRow[],
-  opts?: { siteLastModified?: Date; citySitemapLastModified?: Date }
-): SitemapIndexEntry[] {
+/** Root sitemap index (3 children) — fast on edge; avoids 3k+ entries per request. */
+export function buildApexRootSitemapIndex(opts?: {
+  siteLastModified?: Date;
+  citySitemapLastModified?: Date;
+  restaurantsSitemapLastModified?: Date;
+}): SitemapIndexEntry[] {
   const apex = getApexOrigin();
-
-  const entries: SitemapIndexEntry[] = [
+  return [
     {
       loc: `${apex}/sitemap-main.xml`,
-      ...(opts?.siteLastModified
-        ? { lastModified: opts.siteLastModified }
-        : {}),
+      ...(opts?.siteLastModified ? { lastModified: opts.siteLastModified } : {}),
     },
     {
       loc: `${apex}/sitemaps/cities.xml`,
@@ -397,17 +395,41 @@ export function buildApexSitemapIndexEntries(
         ? { lastModified: opts.citySitemapLastModified }
         : {}),
     },
+    {
+      loc: `${apex}/sitemap-restaurants.xml`,
+      ...(opts?.restaurantsSitemapLastModified
+        ? { lastModified: opts.restaurantsSitemapLastModified }
+        : {}),
+    },
   ];
+}
 
-  for (const restaurant of restaurants) {
+/** One sitemap index entry per restaurant subdomain. */
+export function buildRestaurantSubdomainSitemapIndex(
+  restaurants: RestaurantSitemapRow[]
+): SitemapIndexEntry[] {
+  return restaurants.map((restaurant) => {
     const lastModified = sitemapLastModifiedForRestaurant(restaurant);
-    entries.push({
+    return {
       loc: `${restaurantSubdomainUrl(restaurant.slug)}/sitemap.xml`,
       ...(lastModified ? { lastModified } : {}),
-    });
-  }
+    };
+  });
+}
 
-  return entries;
+/** @deprecated Prefer buildApexRootSitemapIndex + buildRestaurantSubdomainSitemapIndex */
+export function buildApexSitemapIndexEntries(
+  restaurants: RestaurantSitemapRow[],
+  opts?: { siteLastModified?: Date; citySitemapLastModified?: Date }
+): SitemapIndexEntry[] {
+  return [
+    ...buildApexRootSitemapIndex({
+      siteLastModified: opts?.siteLastModified,
+      citySitemapLastModified: opts?.citySitemapLastModified,
+      restaurantsSitemapLastModified: latestDateFromRows(restaurants),
+    }),
+    ...buildRestaurantSubdomainSitemapIndex(restaurants),
+  ];
 }
 
 export const SITEMAP_CACHE_HEADERS = {

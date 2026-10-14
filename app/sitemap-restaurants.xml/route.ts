@@ -1,9 +1,8 @@
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 import {
-  buildApexSitemapIndexEntries,
+  buildRestaurantSubdomainSitemapIndex,
   fetchAllRestaurantSlugs,
-  latestDateFromRows,
 } from "@/lib/sitemap-data";
 import {
   logSitemapError,
@@ -34,9 +33,7 @@ export async function GET(request: Request) {
     }
 
     const xml = sitemapIndexToXml(
-      buildApexSitemapIndexEntries(restaurants, {
-        siteLastModified: latestDateFromRows(restaurants),
-      })
+      buildRestaurantSubdomainSitemapIndex(restaurants)
     );
 
     return sitemapXmlResponse(xml);

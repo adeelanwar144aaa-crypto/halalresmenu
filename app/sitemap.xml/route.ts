@@ -1,11 +1,10 @@
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 import {
-  buildApexSitemapIndexEntries,
+  buildApexRootSitemapIndex,
   buildRestaurantSitemapEntries,
   fetchRestaurantSitemapRow,
   fetchSitemapIndexData,
-  getApexOrigin,
   latestDateFromRows,
 } from "@/lib/sitemap-data";
 import {
@@ -33,36 +32,28 @@ export async function GET(request: Request) {
       return sitemapXmlResponse(xml);
     }
 
-    const apex = getApexOrigin();
-    let restaurants: Awaited<
-      ReturnType<typeof fetchSitemapIndexData>
-    >["restaurants"] = [];
-    let cityLastModified = new Map<string, Date>();
+    let citySitemapLastModified: Date | undefined;
+    let restaurantsSitemapLastModified: Date | undefined;
 
+    let siteLastModified: Date | undefined;
     try {
       const data = await fetchSitemapIndexData();
-      restaurants = data.restaurants;
-      cityLastModified = data.cityLastModified;
+      for (const d of data.cityLastModified.values()) {
+        if (!citySitemapLastModified || d > citySitemapLastModified) {
+          citySitemapLastModified = d;
+        }
+      }
+      restaurantsSitemapLastModified = latestDateFromRows(data.restaurants);
+      siteLastModified = restaurantsSitemapLastModified;
     } catch (error) {
       logSitemapError("apex index data fetch", error);
     }
 
-    let citySitemapLastModified: Date | undefined;
-    for (const d of cityLastModified.values()) {
-      if (!citySitemapLastModified || d > citySitemapLastModified) {
-        citySitemapLastModified = d;
-      }
-    }
-
-    const index = buildApexSitemapIndexEntries(restaurants, {
-      siteLastModified: latestDateFromRows(restaurants),
+    const index = buildApexRootSitemapIndex({
+      siteLastModified,
       citySitemapLastModified,
+      restaurantsSitemapLastModified,
     });
-
-    if (index.length === 0) {
-      index.push({ loc: `${apex}/sitemap-main.xml` });
-      index.push({ loc: `${apex}/sitemaps/cities.xml` });
-    }
 
     const xml = sitemapIndexToXml(index);
     return sitemapXmlResponse(xml);
