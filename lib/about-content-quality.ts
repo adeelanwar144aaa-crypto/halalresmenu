@@ -61,17 +61,6 @@ function extractLikelyDishMentions(text: string, menuNames: string[]): string[] 
   return found;
 }
 
-/** Article must not mention money or prices (menu page holds prices). */
-export function textContainsPrices(fullText: string): boolean {
-  if (/£/.test(fullText)) return true;
-  if (/\bGBP\b/i.test(fullText)) return true;
-  if (/\b\d+(?:\.\d{2})?\s*(?:pounds?|pence)\b/i.test(fullText)) return true;
-  if (/\b(?:from|under|around|about|over)\s+\d+(?:\.\d{2})?\s*(?:pounds?|pence)\b/i.test(fullText)) {
-    return true;
-  }
-  return false;
-}
-
 export type QualityResult = { ok: true } | { ok: false; reasons: string[] };
 
 export function validateGeneratedAbout({
@@ -117,10 +106,6 @@ export function validateGeneratedAbout({
     ...payload.sections.map((s) => `${s.heading} ${s.body}`),
   ].join("\n");
 
-  if (textContainsPrices(fullText)) {
-    reasons.push("contains prices or £ (not allowed in about guide)");
-  }
-
   const lower = fullText.toLowerCase();
   for (const phrase of BANNED_PHRASES) {
     if (lower.includes(phrase)) reasons.push(`banned phrase: ${phrase}`);
@@ -162,7 +147,6 @@ export function qualifiesForManualReview(payload: GeneratedAboutPayload): boolea
     payload.meta_description,
     ...payload.sections.map((s) => `${s.heading} ${s.body}`),
   ].join("\n");
-  if (textContainsPrices(fullText)) return false;
   return true;
 }
 

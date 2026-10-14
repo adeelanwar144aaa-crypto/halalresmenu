@@ -76,8 +76,6 @@ Headings must be specific to the restaurant and match search intent, using the r
 - Location, opening hours and how to visit [Name]
 - Why people choose [Name] in [Area/City]
 
-Do NOT include any prices, costs, or money amounts: no £ sign, no "pounds", no "from £X", no per-person spend. Prices live on the menu page only.
-
 To reach ~1000 words without padding, go deeper on real data: describe many menu items by exact name; briefly explain what dishes are (e.g. what a karahi or shawarma platter is); group items into starters, mains, sides, desserts and drinks; suggest combinations for solo diners, couples, families and groups using real items.
 
 Style: plain, specific, UK English. No clichés: never use "nestled", "hidden gem", "culinary journey", "tantalise", "look no further", "whether you're", "mouth-watering", "a feast for the senses", "elevate". No exclamation marks. No FAQ section. No calls to action like "book now".
@@ -273,7 +271,7 @@ function buildUserPayload(
   const hours = normalizeOpeningHours(row.opening_hours);
   const sizeNote =
     menuItemCount > 80
-      ? `Menu truncated to ${menu?.categories?.reduce((n, c) => n + c.items.length, 0) ?? 0} sample items (full menu has ${menuItemCount}). Use many by exact name (no prices) to reach ~1000 words.`
+      ? `Menu truncated to ${menu?.categories?.reduce((n, c) => n + c.items.length, 0) ?? 0} sample items (full menu has ${menuItemCount}). Use many by exact name to reach ~1000 words.`
       : undefined;
   const notes = [sizeNote, extraUserNote].filter(Boolean).join("\n\n");
   return JSON.stringify(
@@ -453,7 +451,7 @@ function wordCountRetryHint(
 ): string | undefined {
   if (wordCount < MIN_ABOUT_WORDS) {
     const weak = weakestSection(payload);
-    return `Total word count is ${wordCount}; minimum ${MIN_ABOUT_WORDS}, target ~1000. Expand the shortest section "${weak.heading}" (currently ~${weak.words} words in the body) using more menu detail and dish descriptions from the data. No prices or £. Do not invent facts.`;
+    return `Total word count is ${wordCount}; minimum ${MIN_ABOUT_WORDS}, target ~1000. Expand the shortest section "${weak.heading}" (currently ~${weak.words} words in the body) using more menu detail and dish descriptions from the data. Do not invent facts.`;
   }
   return undefined;
 }
