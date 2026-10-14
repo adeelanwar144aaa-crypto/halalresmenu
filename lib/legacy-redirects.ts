@@ -4,6 +4,7 @@ import {
   resolveCanonicalCitySlug,
   slugifyCity,
 } from "@/lib/city-slug";
+import { GENERATED_DELETED_REDIRECTS } from "@/lib/deleted-restaurant-redirects.generated";
 import { getApexOrigin } from "@/lib/sitemap-data";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
@@ -45,7 +46,12 @@ export function getLegacyApexRedirect(pathname: string): string | null {
 }
 
 export function getDeadSubdomainRedirect(slug: string): string | null {
-  return DEAD_SUBDOMAIN_REDIRECTS[slug.trim().toLowerCase()] ?? null;
+  const key = slug.trim().toLowerCase();
+  return (
+    GENERATED_DELETED_REDIRECTS[key] ??
+    DEAD_SUBDOMAIN_REDIRECTS[key] ??
+    null
+  );
 }
 
 /** Build apex city hub URL from a raw restaurant city field. */

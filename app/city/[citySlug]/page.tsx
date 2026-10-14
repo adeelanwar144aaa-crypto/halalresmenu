@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CityPageHero } from "@/components/city/CityPageHero";
 import { CityPageSeoContent } from "@/components/city/CityPageSeoContent";
-import { CityRestaurantBrowseSection } from "@/components/city/CityRestaurantBrowseSection";
+import { CityPaginatedRestaurants } from "@/components/city/CityPaginatedRestaurants";
 import {
   cityDisplayName,
   cityHubPath,
@@ -15,7 +15,14 @@ import {
   buildCitySeoContext,
 } from "@/lib/city-seo";
 import {
-  fetchCityRestaurantsBrowse,
+  CITY_HUB_PAGE_SIZE,
+  cityHubPageCanonical,
+  cityHubPageOffset,
+  cityHubTotalPages,
+  parseCityHubPage,
+} from "@/lib/city-hub-pagination";
+import {
+  fetchCityRestaurants,
   fetchCitySeoStats,
 } from "@/lib/city-restaurants";
 import { getApexOrigin } from "@/lib/sitemap-data";
@@ -25,15 +32,22 @@ export const runtime = "edge";
 /** Keep in sync with `CACHE_TTL.HOME_AND_CITY` in lib/cache-config.ts */
 export const revalidate = 3600;
 
-type PageProps = { params: Promise<{ citySlug: string }> };
+type PageProps = {
+  params: Promise<{ citySlug: string }>;
+  searchParams: Promise<{ page?: string }>;
+};
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: PageProps): Promise<Metadata> {
   const { citySlug } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = parseCityHubPage(pageParam);
   const canonicalSlug = resolveCanonicalCitySlug(citySlug);
   const name = cityDisplayName(canonicalSlug);
-  const canonical = `${getApexOrigin()}${cityHubPath(canonicalSlug)}`;
+  const path = cityHubPath(canonicalSlug);
+  const canonical = cityHubPageCanonical(getApexOrigin(), path, page);
 
   let description = `Browse halal restaurants in ${name}. View menus, reviews, certification details, and local halal dining near you on HalalResMenu.`;
 
@@ -51,7 +65,10 @@ export async function generateMetadata({
     // Fallback description above
   }
 
-  const title = buildCityMetaTitle(name);
+  const title =
+    page > 1
+      ? `${buildCityMetaTitle(name)} — Page ${page}`
+      : buildCityMetaTitle(name);
 
   return {
     title,
@@ -67,8 +84,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function CityHubPage({ params }: PageProps) {
+export default async function CityHubPage({ params, searchParams }: PageProps) {
   const { citySlug } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = parseCityHubPage(pageParam);
   const normalized = citySlug.toLowerCase().trim();
   if (!normalized) notFound();
 
@@ -78,13 +97,21 @@ export default async function CityHubPage({ params }: PageProps) {
   }
 
   const cityName = cityDisplayName(canonical);
-  const [restaurants, seoStats] = await Promise.all([
-    fetchCityRestaurantsBrowse(canonical, cityName),
+  const path = cityHubPath(canonical);
+
+  const [listResult, seoStats] = await Promise.all([
+    fetchCityRestaurants(canonical, {
+      limit: CITY_HUB_PAGE_SIZE,
+      offset: cityHubPageOffset(page),
+    }),
     fetchCitySeoStats(canonical, cityName),
   ]);
 
-  const total = restaurants.length;
-  if (total === 0) notFound();
+  const total = listResult.total;
+  if (total === 0) redirect(getApexOrigin());
+
+  const totalPages = cityHubTotalPages(total);
+  if (page > totalPages) notFound();
 
   const seoContext = buildCitySeoContext({
     citySlug: canonical,
@@ -93,7 +120,6 @@ export default async function CityHubPage({ params }: PageProps) {
     cuisineCounts: seoStats.cuisineCounts,
     areaCounts: seoStats.areaCounts,
   });
-
 
   return (
     <div className="bg-gradient-to-b from-halal-50/30 via-zinc-50 to-zinc-50">
@@ -112,7 +138,7 @@ export default async function CityHubPage({ params }: PageProps) {
         <section className="mt-14 rounded-3xl border border-halal-100 bg-white/80 px-5 py-10 shadow-[0_8px_40px_-20px_rgb(26_122_74_/_0.2)] backdrop-blur-sm sm:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-halal-600">
-              Browse & filter
+              Browse
             </p>
             <h2 className="mt-2 font-serif text-2xl font-bold text-halal-950 sm:text-3xl">
               Halal restaurants in {cityName}
@@ -123,9 +149,12 @@ export default async function CityHubPage({ params }: PageProps) {
             </p>
           </div>
 
-          <CityRestaurantBrowseSection
+          <CityPaginatedRestaurants
+            cityPath={path}
             cityName={cityName}
-            restaurants={restaurants}
+            restaurants={listResult.restaurants}
+            total={total}
+            page={page}
           />
         </section>
       </div>
