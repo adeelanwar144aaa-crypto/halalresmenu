@@ -11,12 +11,39 @@ export function formatMenuPrice(price: number | null | undefined): string | null
   return `£${price.toFixed(2)}`;
 }
 
+function parseMenuPrice(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.round(value * 100) / 100;
+  }
+  if (typeof value === "string") {
+    const n = parseFloat(value.replace(/[£,\s]/g, ""));
+    if (Number.isFinite(n)) return Math.round(n * 100) / 100;
+  }
+  return null;
+}
+
+function normalizeMenuCategories(obj: Record<string, unknown>): unknown[] {
+  if (Array.isArray(obj.categories) && obj.categories.length > 0) {
+    return obj.categories;
+  }
+  if (Array.isArray(obj.sections) && obj.sections.length > 0) {
+    return obj.sections;
+  }
+  if (Array.isArray(obj.menu) && obj.menu.length > 0) {
+    return obj.menu;
+  }
+  if (Array.isArray(obj.items) && obj.items.length > 0) {
+    return [{ name: "Menu", items: obj.items }];
+  }
+  return [];
+}
+
 export function parseMenuData(raw: unknown): MenuData | null {
   const parsed = parseJsonField<Record<string, unknown>>(raw);
   if (!parsed) return null;
 
   const obj = parsed;
-  const categoriesRaw = Array.isArray(obj.categories) ? obj.categories : [];
+  const categoriesRaw = normalizeMenuCategories(obj);
   const categories: MenuDataCategory[] = categoriesRaw
     .map((cat) => {
       if (!cat || typeof cat !== "object") return null;
@@ -32,10 +59,7 @@ export function parseMenuData(raw: unknown): MenuData | null {
           const itemName = String(it.name || "").trim();
           if (!itemName) return null;
 
-          const price =
-            typeof it.price === "number" && Number.isFinite(it.price)
-              ? Math.round(it.price * 100) / 100
-              : null;
+          const price = parseMenuPrice(it.price);
 
           return {
             name: itemName,

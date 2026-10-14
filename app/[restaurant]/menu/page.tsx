@@ -10,7 +10,7 @@ import { MenuSection } from "@/components/restaurant/MenuSection";
 import { parseMenuImagesForRestaurant } from "@/lib/menu-images";
 import { createPageMetadata } from "@/components/seo/MetaTags";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
-import { parseMenuData } from "@/lib/menu-data";
+import { hasMenuData, parseMenuData } from "@/lib/menu-data";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import { restaurantCanonicalUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -44,13 +44,14 @@ export default async function RestaurantMenuPage({ params }: PageProps) {
   const menuData = parseMenuData(row.menu_data);
   const menuImages = parseMenuImagesForRestaurant(row);
   const canonical = restaurantCanonicalUrl(restaurant);
+  const schemaMenuData = hasMenuData(menuData) ? menuData : null;
 
   return (
     <>
       <SchemaMarkup
         restaurant={row}
         url={canonical}
-        menuData={menuData}
+        menuData={schemaMenuData}
       />
       <div className="border-b border-halal-100/60 bg-gradient-to-r from-halal-50/50 via-white to-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

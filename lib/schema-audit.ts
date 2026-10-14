@@ -3,7 +3,7 @@ import {
   buildRestaurantSchemaGraph,
   buildOpeningHoursSpecification,
 } from "@/components/seo/SchemaMarkup";
-import { parseMenuData } from "@/lib/menu-data";
+import { hasMenuData, parseMenuData } from "@/lib/menu-data";
 import { parseRestaurantPhotosJson } from "@/lib/restaurant-photos";
 import {
   normalizeAddressCountry,
@@ -79,6 +79,8 @@ export function auditSchemaDocument(
     page: RestaurantPageKind;
     expectedRestaurantUrl: string;
     includeFaq?: boolean;
+    /** When true, /menu must include a Menu node in JSON-LD. */
+    expectsFullMenu?: boolean;
   }
 ): SchemaIssue[] {
   const issues: SchemaIssue[] = [];
@@ -242,11 +244,11 @@ export function auditSchemaDocument(
   }
 
   const menus = byType.get("Menu") ?? [];
-  if (page === "menu" && menus.length === 0) {
+  if (page === "menu" && ctx.expectsFullMenu && menus.length === 0) {
     issues.push({
       code: "menu_page_missing_menu",
       message: "Menu page schema missing Menu entity",
-      severity: "warning",
+      severity: "error",
     });
   }
 
@@ -316,8 +318,10 @@ export function auditRestaurantRow(
   const menuData = parseMenuData(restaurant.menu_data);
   const all: SchemaIssue[] = [];
 
+  const menuItemsPresent = hasMenuData(menuData);
+
   for (const page of pages) {
-    if (page === "menu" && !menuData) continue;
+    if (page === "menu" && !menuItemsPresent) continue;
 
     const schema = buildRestaurantSchemaGraph({
       restaurant,
@@ -334,6 +338,7 @@ export function auditRestaurantRow(
         page,
         expectedRestaurantUrl: url,
         includeFaq: false,
+        expectsFullMenu: page === "menu" && menuItemsPresent,
       })
     );
   }
