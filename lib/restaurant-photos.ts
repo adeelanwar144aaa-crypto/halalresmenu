@@ -84,6 +84,13 @@ export function firstRestaurantPhotoUrl(
   return resolveRestaurantGalleryUrls(jsonbPhotos, tablePhotos)[0] ?? null;
 }
 
+/** First photo URL from JSONB only (city list cards — avoids extra client logic). */
+export function firstRestaurantPhotoFromJson(jsonbPhotos: unknown): string | null {
+  const urls = parseRestaurantPhotosJson(jsonbPhotos);
+  const r2 = urls.find((u) => u.includes("r2.dev"));
+  return r2 ?? urls[0] ?? null;
+}
+
 /** Alternate public URL shapes for Supabase storage objects. */
 export function restaurantPhotoUrlVariants(
   url: string,

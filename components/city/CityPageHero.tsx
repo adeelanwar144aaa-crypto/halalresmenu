@@ -1,4 +1,4 @@
-import { CityCardBackground } from "@/components/city/CityCardBackground";
+import { CityHeroBackground } from "@/components/city/CityHeroBackground";
 
 export function CityPageHero({
   cityName,
@@ -12,11 +12,7 @@ export function CityPageHero({
   return (
     <section className="relative -mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
       <div className="relative min-h-[220px] sm:min-h-[260px]">
-        <CityCardBackground
-          slug={citySlug}
-          alt={`${cityName} cityscape`}
-          sizes="100vw"
-        />
+        <CityHeroBackground slug={citySlug} alt={`${cityName} cityscape`} />
         <div className="relative z-10 mx-auto flex min-h-[220px] max-w-7xl flex-col justify-end px-4 pb-8 pt-16 sm:min-h-[260px] sm:px-6 sm:pb-10 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-halal-200">
             Halal dining in {cityName}
