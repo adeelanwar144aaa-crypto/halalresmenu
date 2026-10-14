@@ -5,8 +5,11 @@ import { aboutContentWordCount } from "@/lib/about-content-types";
 
 export const DRAFTS_DIR = path.resolve(process.cwd(), "scripts/drafts");
 
+export type AboutDraftQualityStatus = "PASS" | "FAIL" | "REVIEW";
+
 export type AboutDraftQuality = {
   pass: boolean;
+  status: AboutDraftQualityStatus;
   reasons: string[];
 };
 

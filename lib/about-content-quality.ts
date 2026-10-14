@@ -2,6 +2,9 @@ import type { MenuData } from "@/types/restaurant";
 import type { AboutContent, GeneratedAboutPayload } from "@/lib/about-content-types";
 import { aboutContentWordCount } from "@/lib/about-content-types";
 
+export const MIN_ABOUT_WORDS = 500;
+export const MIN_SECTION_BODY_WORDS = 100;
+
 const BANNED_PHRASES = [
   "nestled",
   "hidden gem",
@@ -17,10 +20,14 @@ const BANNED_PHRASES = [
   "elevate",
 ];
 
-const CERT_WORDS = /\b(certified|certification|certifier|hmc|halal monitoring committee)\b/i;
-
 export function normalizeForMatch(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function countWords(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).filter(Boolean).length;
 }
 
 export function menuItemNames(menuData: MenuData | null): string[] {
@@ -34,19 +41,6 @@ export function menuItemNames(menuData: MenuData | null): string[] {
   return names;
 }
 
-export function menuPrices(menuData: MenuData | null): number[] {
-  if (!menuData?.categories) return [];
-  const prices: number[] = [];
-  for (const cat of menuData.categories) {
-    for (const item of cat.items) {
-      if (item.price != null && Number.isFinite(item.price)) {
-        prices.push(Math.round(item.price * 100) / 100);
-      }
-    }
-  }
-  return prices;
-}
-
 function fuzzyItemMatch(mention: string, items: string[]): boolean {
   const m = normalizeForMatch(mention);
   if (m.length < 3) return true;
@@ -54,16 +48,6 @@ function fuzzyItemMatch(mention: string, items: string[]): boolean {
     const n = normalizeForMatch(name);
     return n.includes(m) || m.includes(n);
   });
-}
-
-function extractMentionedPrices(text: string): number[] {
-  const out: number[] = [];
-  const re = /£\s*(\d+(?:\.\d{1,2})?)/g;
-  let m;
-  while ((m = re.exec(text))) {
-    out.push(parseFloat(m[1]));
-  }
-  return out;
 }
 
 function extractLikelyDishMentions(text: string, menuNames: string[]): string[] {
@@ -77,12 +61,23 @@ function extractLikelyDishMentions(text: string, menuNames: string[]): string[] 
   return found;
 }
 
+/** Article must not mention money or prices (menu page holds prices). */
+export function textContainsPrices(fullText: string): boolean {
+  if (/£/.test(fullText)) return true;
+  if (/\bGBP\b/i.test(fullText)) return true;
+  if (/\b\d+(?:\.\d{2})?\s*(?:pounds?|pence)\b/i.test(fullText)) return true;
+  if (/\b(?:from|under|around|about|over)\s+\d+(?:\.\d{2})?\s*(?:pounds?|pence)\b/i.test(fullText)) {
+    return true;
+  }
+  return false;
+}
+
 export type QualityResult = { ok: true } | { ok: false; reasons: string[] };
 
 export function validateGeneratedAbout({
   payload,
   menuData,
-  aboutRaw,
+  aboutRaw: _aboutRaw,
   restaurantName,
   city,
 }: {
@@ -102,19 +97,17 @@ export function validateGeneratedAbout({
   if (payload.sections.length < 3 || payload.sections.length > 4) {
     reasons.push(`expected 3–4 sections, got ${payload.sections.length}`);
   }
-  if (words < 380 || words > 1150) {
-    reasons.push(`word count ${words} outside 380–1150`);
+  if (words < MIN_ABOUT_WORDS) {
+    reasons.push(`word count ${words} below ${MIN_ABOUT_WORDS}`);
   }
-  if (payload.meta_title.length > 60) {
-    reasons.push(`meta_title length ${payload.meta_title.length}`);
-  }
-  if (
-    payload.meta_description.length < 115 ||
-    payload.meta_description.length > 160
-  ) {
-    reasons.push(
-      `meta_description length ${payload.meta_description.length} (want 115–160)`
-    );
+
+  for (let i = 0; i < payload.sections.length; i++) {
+    const secWords = countWords(payload.sections[i].body);
+    if (secWords < MIN_SECTION_BODY_WORDS) {
+      reasons.push(
+        `section ${i + 1} "${payload.sections[i].heading}" body ${secWords} words (want ≥${MIN_SECTION_BODY_WORDS})`
+      );
+    }
   }
 
   const fullText = [
@@ -123,6 +116,10 @@ export function validateGeneratedAbout({
     payload.meta_description,
     ...payload.sections.map((s) => `${s.heading} ${s.body}`),
   ].join("\n");
+
+  if (textContainsPrices(fullText)) {
+    reasons.push("contains prices or £ (not allowed in about guide)");
+  }
 
   const lower = fullText.toLowerCase();
   for (const phrase of BANNED_PHRASES) {
@@ -137,11 +134,6 @@ export function validateGeneratedAbout({
     reasons.push("city missing");
   }
 
-  const rawLower = (aboutRaw || "").toLowerCase();
-  if (CERT_WORDS.test(fullText) && !CERT_WORDS.test(rawLower)) {
-    reasons.push("certification mentioned but not in about_raw");
-  }
-
   const items = menuItemNames(menuData);
   const mentioned = extractLikelyDishMentions(fullText, items);
   for (const dish of mentioned) {
@@ -150,15 +142,114 @@ export function validateGeneratedAbout({
     }
   }
 
-  const prices = menuPrices(menuData);
-  for (const p of extractMentionedPrices(fullText)) {
-    if (!prices.some((mp) => Math.abs(mp - p) <= 1.05)) {
-      reasons.push(`price £${p.toFixed(2)} not in menu_data`);
+  if (reasons.length > 0) return { ok: false, reasons };
+  return { ok: true };
+}
+
+export function qualifiesForManualReview(payload: GeneratedAboutPayload): boolean {
+  const words = aboutContentWordCount({
+    intro: payload.intro,
+    sections: payload.sections,
+  });
+  if (words < MIN_ABOUT_WORDS) return false;
+  if (payload.sections.length < 3 || payload.sections.length > 4) return false;
+  for (const s of payload.sections) {
+    if (countWords(s.body) < MIN_SECTION_BODY_WORDS) return false;
+  }
+  const fullText = [
+    payload.intro,
+    payload.meta_title,
+    payload.meta_description,
+    ...payload.sections.map((s) => `${s.heading} ${s.body}`),
+  ].join("\n");
+  if (textContainsPrices(fullText)) return false;
+  return true;
+}
+
+export function weakestSection(payload: GeneratedAboutPayload): {
+  index: number;
+  heading: string;
+  words: number;
+} {
+  let index = 0;
+  let words = Infinity;
+  payload.sections.forEach((s, i) => {
+    const w = countWords(s.body);
+    if (w < words) {
+      words = w;
+      index = i;
+    }
+  });
+  return {
+    index,
+    heading: payload.sections[index]?.heading ?? "",
+    words: words === Infinity ? 0 : words,
+  };
+}
+
+function trimToMaxChars(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  if (lastSpace > Math.floor(max * 0.55)) return cut.slice(0, lastSpace).trim();
+  return cut.slice(0, max - 1).trim() + "…";
+}
+
+/** Fix meta length and missing name/city in intro without regenerating. */
+export function repairMinorAboutPayload(
+  payload: GeneratedAboutPayload,
+  restaurantName: string,
+  city: string | null
+): GeneratedAboutPayload {
+  const meta_title = trimToMaxChars(payload.meta_title, 60);
+  const meta_description = trimToMaxChars(payload.meta_description, 155);
+  let intro = payload.intro;
+
+  const fullText = [
+    intro,
+    meta_title,
+    meta_description,
+    ...payload.sections.map((s) => `${s.heading} ${s.body}`),
+  ].join("\n");
+  let norm = normalizeForMatch(fullText);
+
+  const nameNorm = normalizeForMatch(restaurantName);
+  if (nameNorm && !norm.includes(nameNorm)) {
+    intro = `${restaurantName}. ${intro}`;
+  }
+  norm = normalizeForMatch(
+    [intro, meta_title, meta_description, ...payload.sections.map((s) => s.body)].join("\n")
+  );
+  if (city) {
+    const cityNorm = normalizeForMatch(city);
+    if (cityNorm && !norm.includes(cityNorm)) {
+      intro = `${restaurantName} in ${city}. ${intro}`;
     }
   }
 
-  if (reasons.length > 0) return { ok: false, reasons };
-  return { ok: true };
+  return {
+    meta_title,
+    meta_description,
+    intro,
+    sections: payload.sections,
+  };
+}
+
+export function preparePayloadForValidation(
+  payload: GeneratedAboutPayload,
+  restaurantName: string,
+  city: string | null
+): GeneratedAboutPayload {
+  return repairMinorAboutPayload(payload, restaurantName, city);
+}
+
+export function isMinorQualityReason(reason: string): boolean {
+  return (
+    reason.startsWith("meta_description length") ||
+    reason.startsWith("meta_title length") ||
+    reason === "city missing" ||
+    reason === "restaurant name missing"
+  );
 }
 
 export function sentenceSet(text: string): Set<string> {

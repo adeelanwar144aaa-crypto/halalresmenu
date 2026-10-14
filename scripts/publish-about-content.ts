@@ -37,12 +37,17 @@ function parseList(flag: string): string[] | null {
 }
 
 const ALL = args.includes("--all");
+const REVIEW = args.includes("--review");
 const ONLY = parseList("--only");
 const SKIP = new Set(parseList("--skip") ?? []);
 
-function draftPublishable(d: AboutDraftFile): string | null {
+function draftPublishable(d: AboutDraftFile, allowReview = false): string | null {
   if (d.error) return d.error;
-  if (!d.quality?.pass) return `quality FAIL: ${d.quality.reasons.join("; ")}`;
+  if (d.quality?.status === "REVIEW" && allowReview) {
+    /* manual review publish */
+  } else if (!d.quality?.pass) {
+    return `quality ${d.quality?.status ?? "FAIL"}: ${d.quality?.reasons?.join("; ") ?? "unknown"}`;
+  }
   if (!d.intro?.trim() || !d.sections?.length) return "missing intro/sections";
   if (!d.meta_title?.trim() || !d.meta_description?.trim()) {
     return "missing meta_title or meta_description";
@@ -51,8 +56,8 @@ function draftPublishable(d: AboutDraftFile): string | null {
 }
 
 async function main() {
-  if (!ALL && !ONLY) {
-    console.error("Use --all or --only slug1,slug2");
+  if (!ALL && !ONLY && !REVIEW) {
+    console.error("Use --all, --review, or --only slug1,slug2");
     process.exit(1);
   }
 
@@ -65,6 +70,13 @@ async function main() {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   let drafts = listAboutDraftFiles();
+  if (REVIEW) {
+    drafts = drafts.filter((d) => d.quality?.status === "REVIEW");
+  } else if (ALL) {
+    drafts = drafts.filter(
+      (d) => d.quality?.status === "PASS" || (d.quality?.pass && d.quality?.status !== "REVIEW")
+    );
+  }
   if (ONLY) {
     const set = new Set(ONLY);
     drafts = ONLY.map((slug) => readAboutDraft(slug)).filter(
@@ -76,11 +88,35 @@ async function main() {
   }
   drafts = drafts.filter((d) => !SKIP.has(d.slug));
 
+  const publishedSlugs = new Set<string>();
+  if (ALL && !REVIEW) {
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("restaurants")
+        .select("slug, content_generated_at, about_content")
+        .not("content_generated_at", "is", null)
+        .range(from, from + 999);
+      if (error) throw error;
+      const batch = data ?? [];
+      for (const row of batch) {
+        const ac = row.about_content as { intro?: string } | null;
+        if (row.slug && ac?.intro?.trim()) publishedSlugs.add(row.slug);
+      }
+      if (batch.length < 1000) break;
+      from += 1000;
+    }
+  }
+
   let published = 0;
   let skipped = 0;
 
   for (const d of drafts) {
-    const block = draftPublishable(d);
+    if (ALL && !REVIEW && publishedSlugs.has(d.slug)) {
+      skipped++;
+      continue;
+    }
+    const block = draftPublishable(d, REVIEW || d.quality?.status === "REVIEW");
     if (block && !ONLY?.includes(d.slug)) {
       console.log("skip", d.slug, "—", block);
       skipped++;
