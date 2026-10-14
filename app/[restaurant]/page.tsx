@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-/** Node runtime so dev can read scripts/drafts (edge + Cloudflare dev has no /api routes). */
-export const runtime = "nodejs";
+export const runtime = "edge";
 import { HeroSection } from "@/components/restaurant/HeroSection";
 import { NearbyMosques } from "@/components/restaurant/NearbyMosques";
 import {
@@ -16,9 +15,6 @@ import {
   resolveSeoMetaDescription,
   resolveSeoTitle,
 } from "@/lib/resolve-about-content";
-import { loadDraftPreviewSync } from "@/lib/load-draft-preview.server";
-import { mergeDraftPreview } from "@/lib/preview-drafts";
-import { DraftPreviewBanner } from "@/components/restaurant/DraftPreviewBanner";
 import { LocationFindUs } from "@/components/restaurant/overview/LocationFindUs";
 import { MenuHighlights } from "@/components/restaurant/overview/MenuHighlights";
 import { NearbyHalalSEO } from "@/components/restaurant/overview/NearbyHalalSEO";
@@ -57,9 +53,6 @@ export async function generateMetadata({
     return createPageMetadata({ pageType: "overview", slug: restaurant });
   }
 
-  const draft = loadDraftPreviewSync(restaurant);
-  const { row: viewRow } = mergeDraftPreview(row, draft);
-
   const tablePhotos = await fetchRestaurantPhotos(row.id);
   const ogImage = firstRestaurantPhotoUrl(row.photos, tablePhotos);
 
@@ -72,8 +65,8 @@ export async function generateMetadata({
     address: row.address,
     postcode: row.postcode,
     ogImage,
-    seoTitle: resolveSeoTitle(viewRow),
-    seoMetaDescription: resolveSeoMetaDescription(viewRow),
+    seoTitle: resolveSeoTitle(row),
+    seoMetaDescription: resolveSeoMetaDescription(row),
   });
 }
 
@@ -81,9 +74,6 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
   const { restaurant } = await params;
   const row = await fetchRestaurantBySlug(restaurant);
   if (!row) notFound();
-
-  const draft = loadDraftPreviewSync(restaurant);
-  const { row: viewRow, usingDraft } = mergeDraftPreview(row, draft);
 
   const restaurantName = row.name?.trim() || "Restaurant";
 
@@ -116,7 +106,7 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   const menuSample = getMenuSchemaSample(menuData);
   const galleryUrls = resolveRestaurantGalleryUrls(row.photos, photos);
-  const aboutContent = resolveAboutContent(viewRow);
+  const aboutContent = resolveAboutContent(row);
 
   const schemaReviews = googleReviews.map((gr, i) => ({
     id: `google-${i}`,
@@ -131,7 +121,6 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   return (
     <article className="bg-white">
-      {usingDraft ? <DraftPreviewBanner /> : null}
       <OverviewSchema
         restaurant={row}
         url={canonical}
