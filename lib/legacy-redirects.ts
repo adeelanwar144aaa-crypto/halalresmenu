@@ -4,7 +4,7 @@ import {
   resolveCanonicalCitySlug,
   slugifyCity,
 } from "@/lib/city-slug";
-import { GENERATED_DELETED_REDIRECTS } from "@/lib/deleted-restaurant-redirects.generated";
+import { getGeneratedDeletedRedirect } from "@/lib/deleted-redirects-edge";
 import { getApexOrigin } from "@/lib/sitemap-data";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
@@ -46,9 +46,16 @@ export function getLegacyApexRedirect(pathname: string): string | null {
 }
 
 export function getDeadSubdomainRedirect(slug: string): string | null {
+  return DEAD_SUBDOMAIN_REDIRECTS[slug.trim().toLowerCase()] ?? null;
+}
+
+export async function getDeadSubdomainRedirectAsync(
+  slug: string,
+  originHint?: string
+): Promise<string | null> {
   const key = slug.trim().toLowerCase();
   return (
-    GENERATED_DELETED_REDIRECTS[key] ??
+    (await getGeneratedDeletedRedirect(key, originHint)) ??
     DEAD_SUBDOMAIN_REDIRECTS[key] ??
     null
   );

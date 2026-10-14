@@ -34,6 +34,7 @@
 
 # upload pipeline (local data, not for git)
 /scripts/logs/
+/scripts/backups/
 /scripts/restaurant-lists/
 *.zip
 upload.log

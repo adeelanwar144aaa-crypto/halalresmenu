@@ -8,6 +8,7 @@ import {
 } from "@/lib/host-routing";
 import {
   getDeadSubdomainRedirect,
+  getDeadSubdomainRedirectAsync,
   getLegacyApexRedirect,
   restaurantCityHubUrl,
 } from "@/lib/legacy-redirects";
@@ -100,6 +101,9 @@ function forwardWithPathname(
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const host = requestHost(request);
+  const apexOrigin = isApexHost(host)
+    ? `${request.nextUrl.protocol}//${hostnameOnly(host)}`
+    : "https://halalresmenu.com";
   const pathNorm = pathname.replace(/\/$/, "") || "/";
 
   const wwwTarget = wwwApexRedirectUrl(
@@ -165,7 +169,9 @@ export async function middleware(request: NextRequest) {
       return maintenance503Response();
     }
     if (slugResult === "missing") {
-      const deadRedirect = getDeadSubdomainRedirect(slug);
+      const deadRedirect =
+        getDeadSubdomainRedirect(slug) ??
+        (await getDeadSubdomainRedirectAsync(slug, apexOrigin));
       if (deadRedirect) {
         return redirect301(deadRedirect);
       }
@@ -211,7 +217,9 @@ export async function middleware(request: NextRequest) {
           );
         }
 
-        const deadRedirect = getDeadSubdomainRedirect(parsed.slug);
+        const deadRedirect =
+          getDeadSubdomainRedirect(parsed.slug) ??
+          (await getDeadSubdomainRedirectAsync(parsed.slug, apexOrigin));
         if (deadRedirect) {
           return finalizeResponse(request, redirect301(deadRedirect));
         }
