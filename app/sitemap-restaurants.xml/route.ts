@@ -3,8 +3,13 @@ export const runtime = "edge";
 import {
   buildApexSitemapIndexEntries,
   fetchAllRestaurantSlugs,
-  SITEMAP_CACHE_HEADERS,
+  latestDateFromRows,
 } from "@/lib/sitemap-data";
+import {
+  logSitemapError,
+  sitemapFailureResponse,
+  sitemapXmlResponse,
+} from "@/lib/sitemap-route";
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
 import { sitemapIndexToXml } from "@/lib/sitemap-xml";
 
@@ -16,12 +21,26 @@ export const revalidate = 3600;
  * (main site sitemap + all restaurant subdomain sitemaps).
  */
 export async function GET(request: Request) {
-  if (restaurantSlugFromRequest(request)) {
-    return new Response("Not found", { status: 404 });
+  try {
+    if (restaurantSlugFromRequest(request)) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    let restaurants: Awaited<ReturnType<typeof fetchAllRestaurantSlugs>> = [];
+    try {
+      restaurants = await fetchAllRestaurantSlugs();
+    } catch (error) {
+      logSitemapError("sitemap-restaurants slug fetch", error);
+    }
+
+    const xml = sitemapIndexToXml(
+      buildApexSitemapIndexEntries(restaurants, {
+        siteLastModified: latestDateFromRows(restaurants),
+      })
+    );
+
+    return sitemapXmlResponse(xml);
+  } catch (error) {
+    return sitemapFailureResponse("sitemap-restaurants.xml", error);
   }
-
-  const restaurants = await fetchAllRestaurantSlugs();
-  const xml = sitemapIndexToXml(buildApexSitemapIndexEntries(restaurants));
-
-  return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });
 }

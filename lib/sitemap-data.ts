@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { cacheControlHeader, CACHE_TTL } from "@/lib/cache-config";
 import { cityHubPath, resolveCanonicalCitySlug, slugifyCity } from "@/lib/city-slug";
-import { restaurantContentUpdatedAt } from "@/lib/restaurant-freshness";
+import { latestSitemapDate } from "@/lib/sitemap-dates";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
@@ -10,14 +10,13 @@ import { getSiteUrl, restaurantSubdomainUrl } from "@/lib/utils";
 
 const PAGE_SIZE = 1000;
 
+/** Lightweight columns only — avoids menu_data/photos on edge (CPU/time limits). */
 const RESTAURANT_SITEMAP_SELECT =
-  "slug, updated_at, photos, menu_data, images_uploaded_at, content_generated_at";
+  "slug, city, updated_at, images_uploaded_at, content_generated_at";
 
 export type RestaurantSitemapRow = {
   slug: string;
   updated_at?: string | null;
-  photos?: unknown;
-  menu_data?: unknown;
   images_uploaded_at?: string | null;
   content_generated_at?: string | null;
 };
@@ -25,13 +24,11 @@ export type RestaurantSitemapRow = {
 export function sitemapLastModifiedForRestaurant(
   row: RestaurantSitemapRow
 ): Date | undefined {
-  const content = restaurantContentUpdatedAt(row);
-  if (content) return content;
-  if (row.updated_at?.trim()) {
-    const d = new Date(row.updated_at);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return undefined;
+  return latestSitemapDate(
+    row.images_uploaded_at,
+    row.content_generated_at,
+    row.updated_at
+  );
 }
 
 export type SitemapIndexEntry = {
@@ -50,11 +47,25 @@ export function getApexOrigin(): string {
   }
 }
 
-export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]> {
+function rowFromSitemapRecord(row: Record<string, unknown>): RestaurantSitemapRow | null {
+  const slug = String(row.slug ?? "").trim();
+  if (!isSubdomainSafeSlug(slug)) return null;
+  return {
+    slug,
+    updated_at: row.updated_at as string | null | undefined,
+    images_uploaded_at: row.images_uploaded_at as string | null | undefined,
+    content_generated_at: row.content_generated_at as string | null | undefined,
+  };
+}
+
+async function fetchSitemapRestaurantPages(
+  select: string,
+  context: string
+): Promise<Record<string, unknown>[]> {
   const supabase = getSupabaseServer();
   if (!supabase) throw new SupabaseUnavailableError();
 
-  const rows: RestaurantSitemapRow[] = [];
+  const all: Record<string, unknown>[] = [];
   let offset = 0;
 
   while (true) {
@@ -63,7 +74,7 @@ export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]>
 
     const full = await supabase
       .from("restaurants")
-      .select(RESTAURANT_SITEMAP_SELECT)
+      .select(select)
       .not("slug", "is", null)
       .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
@@ -74,7 +85,7 @@ export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]>
     ) {
       const fallback = await supabase
         .from("restaurants")
-        .select("slug, updated_at, photos, menu_data")
+        .select("slug, city, updated_at")
         .not("slug", "is", null)
         .order("id", { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
@@ -86,30 +97,87 @@ export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]>
     }
 
     if (error) {
-      throwIfSupabaseUnavailable(error, "restaurants fetch");
+      throwIfSupabaseUnavailable(error, context);
       throw error;
     }
 
     if (!data?.length) break;
-
-    for (const row of data) {
-      const slug = String(row.slug ?? "").trim();
-      if (isSubdomainSafeSlug(slug)) {
-        rows.push({
-          slug,
-          updated_at: row.updated_at as string | null | undefined,
-          photos: row.photos,
-          menu_data: row.menu_data,
-          images_uploaded_at: row.images_uploaded_at as string | null | undefined,
-        });
-      }
-    }
-
+    all.push(...data);
     if (data.length < PAGE_SIZE) break;
     offset += PAGE_SIZE;
   }
 
+  return all;
+}
+
+export async function fetchAllRestaurantSlugs(): Promise<RestaurantSitemapRow[]> {
+  const data = await fetchSitemapRestaurantPages(
+    RESTAURANT_SITEMAP_SELECT,
+    "restaurants fetch"
+  );
+  const rows: RestaurantSitemapRow[] = [];
+  for (const row of data) {
+    const parsed = rowFromSitemapRecord(row);
+    if (parsed) rows.push(parsed);
+  }
   return rows;
+}
+
+/** One paginated scan for apex index (restaurant list + city lastmod). */
+export async function fetchSitemapIndexData(): Promise<{
+  restaurants: RestaurantSitemapRow[];
+  cityLastModified: Map<string, Date>;
+}> {
+  const data = await fetchSitemapRestaurantPages(
+    RESTAURANT_SITEMAP_SELECT,
+    "sitemap index fetch"
+  );
+  const restaurants: RestaurantSitemapRow[] = [];
+  const cityLastModified = new Map<string, Date>();
+
+  for (const row of data) {
+    const parsed = rowFromSitemapRecord(row);
+    if (parsed) restaurants.push(parsed);
+
+    const name = String(row.city ?? "").trim();
+    if (name) {
+      const citySlug = resolveCanonicalCitySlug(slugifyCity(name));
+      if (citySlug) {
+        const candidate = sitemapLastModifiedForRestaurant(
+          parsed ?? {
+            slug: "",
+            updated_at: row.updated_at as string | null | undefined,
+            images_uploaded_at: row.images_uploaded_at as string | null | undefined,
+            content_generated_at: row.content_generated_at as string | null | undefined,
+          }
+        );
+        if (candidate) {
+          const prev = cityLastModified.get(citySlug);
+          if (!prev || candidate > prev) cityLastModified.set(citySlug, candidate);
+        }
+      }
+    }
+  }
+
+  return { restaurants, cityLastModified };
+}
+
+/** Max lastmod across all restaurants (for main site urlset). */
+export async function fetchSiteLastModified(): Promise<Date | undefined> {
+  const data = await fetchSitemapRestaurantPages(
+    "updated_at, images_uploaded_at, content_generated_at",
+    "site lastmod fetch"
+  );
+  let latest: Date | undefined;
+  for (const row of data) {
+    const d = latestSitemapDate(
+      row.images_uploaded_at,
+      row.content_generated_at,
+      row.updated_at
+    );
+    if (d && (!latest || d > latest)) latest = d;
+  }
+  return latest;
 }
 
 export async function fetchRestaurantSitemapRow(
@@ -123,7 +191,9 @@ export async function fetchRestaurantSitemapRow(
 
   const { data, error } = await supabase
     .from("restaurants")
-    .select("slug, updated_at")
+    .select(
+      "slug, updated_at, images_uploaded_at, content_generated_at"
+    )
     .eq("slug", normalized)
     .maybeSingle();
 
@@ -136,7 +206,12 @@ export async function fetchRestaurantSitemapRow(
   const rowSlug = String(data.slug ?? "").trim();
   if (!isSubdomainSafeSlug(rowSlug)) return null;
 
-  return { slug: rowSlug, updated_at: data.updated_at };
+  return {
+    slug: rowSlug,
+    updated_at: data.updated_at,
+    images_uploaded_at: data.images_uploaded_at,
+    content_generated_at: data.content_generated_at,
+  };
 }
 
 /** Distinct cities that have at least one restaurant (for city hub sitemaps). */
@@ -187,74 +262,8 @@ export async function fetchDistinctCitySlugs(): Promise<
 
 /** Max content/update time per canonical city slug (for city hub lastmod). */
 export async function fetchCityLastModifiedMap(): Promise<Map<string, Date>> {
-  const supabase = getSupabaseServer();
-  if (!supabase) throw new SupabaseUnavailableError();
-
-  const map = new Map<string, Date>();
-  let offset = 0;
-
-  while (true) {
-    let data: Record<string, unknown>[] | null = null;
-    let error = null as { message?: string } | null;
-
-    const full = await supabase
-      .from("restaurants")
-      .select("city, updated_at, photos, menu_data, images_uploaded_at")
-      .not("city", "is", null)
-      .order("id", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (
-      full.error &&
-      /images_uploaded_at/i.test(full.error.message ?? "")
-    ) {
-      const fallback = await supabase
-        .from("restaurants")
-        .select("city, updated_at, photos, menu_data")
-        .not("city", "is", null)
-        .order("id", { ascending: true })
-        .range(offset, offset + PAGE_SIZE - 1);
-      data = fallback.data as Record<string, unknown>[] | null;
-      error = fallback.error;
-    } else {
-      data = full.data as Record<string, unknown>[] | null;
-      error = full.error;
-    }
-
-    if (error) {
-      throwIfSupabaseUnavailable(error, "city lastmod fetch");
-      throw error;
-    }
-
-    if (!data?.length) break;
-
-    for (const row of data) {
-      const name = String(row.city ?? "").trim();
-      if (!name) continue;
-      const citySlug = resolveCanonicalCitySlug(slugifyCity(name));
-      if (!citySlug) continue;
-
-      const rowForFreshness: RestaurantSitemapRow = {
-        slug: "",
-        updated_at: row.updated_at as string | null | undefined,
-        photos: row.photos,
-        menu_data: row.menu_data,
-        images_uploaded_at: row.images_uploaded_at as string | null | undefined,
-      };
-      const candidate =
-        sitemapLastModifiedForRestaurant(rowForFreshness) ??
-        (row.updated_at ? new Date(String(row.updated_at)) : null);
-      if (!candidate || Number.isNaN(candidate.getTime())) continue;
-
-      const prev = map.get(citySlug);
-      if (!prev || candidate > prev) map.set(citySlug, candidate);
-    }
-
-    if (data.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
-  return map;
+  const { cityLastModified } = await fetchSitemapIndexData();
+  return cityLastModified;
 }
 
 export function latestDateFromRows(rows: RestaurantSitemapRow[]): Date | undefined {

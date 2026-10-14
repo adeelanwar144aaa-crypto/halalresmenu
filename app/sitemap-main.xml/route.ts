@@ -2,10 +2,12 @@ export const runtime = "edge";
 
 import {
   buildMainSiteSitemapEntries,
-  fetchAllRestaurantSlugs,
-  latestDateFromRows,
-  SITEMAP_CACHE_HEADERS,
+  fetchSiteLastModified,
 } from "@/lib/sitemap-data";
+import {
+  sitemapFailureResponse,
+  sitemapXmlResponse,
+} from "@/lib/sitemap-route";
 import { restaurantSlugFromRequest } from "@/lib/sitemap-host";
 import { sitemapToXml } from "@/lib/sitemap-xml";
 
@@ -14,14 +16,15 @@ export const revalidate = 3600;
 
 /** Main site urlset — only served on the apex domain. */
 export async function GET(request: Request) {
-  if (restaurantSlugFromRequest(request)) {
-    return new Response("Not found", { status: 404 });
-  }
+  try {
+    if (restaurantSlugFromRequest(request)) {
+      return new Response("Not found", { status: 404 });
+    }
 
-  const restaurants = await fetchAllRestaurantSlugs();
-  const siteLastModified = latestDateFromRows(restaurants);
-  const xml = sitemapToXml(
-    buildMainSiteSitemapEntries(siteLastModified)
-  );
-  return new Response(xml, { headers: SITEMAP_CACHE_HEADERS });
+    const siteLastModified = await fetchSiteLastModified();
+    const xml = sitemapToXml(buildMainSiteSitemapEntries(siteLastModified));
+    return sitemapXmlResponse(xml);
+  } catch (error) {
+    return sitemapFailureResponse("sitemap-main.xml", error);
+  }
 }

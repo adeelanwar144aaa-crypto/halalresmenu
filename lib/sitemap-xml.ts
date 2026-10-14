@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import type { SitemapIndexEntry } from "@/lib/sitemap-data";
+import { parseValidSitemapDate, sitemapDateToIso } from "@/lib/sitemap-dates";
 
 function escapeXml(value: string): string {
   return value
@@ -15,12 +16,10 @@ export function sitemapToXml(entries: MetadataRoute.Sitemap): string {
     .map((entry) => {
       const lines = [`    <loc>${escapeXml(entry.url)}</loc>`];
 
-      if (entry.lastModified) {
-        const lastModified =
-          entry.lastModified instanceof Date
-            ? entry.lastModified.toISOString()
-            : new Date(entry.lastModified).toISOString();
-        lines.push(`    <lastmod>${lastModified}</lastmod>`);
+      if (entry.lastModified != null) {
+        const d = parseValidSitemapDate(entry.lastModified);
+        const iso = sitemapDateToIso(d);
+        if (iso) lines.push(`    <lastmod>${iso}</lastmod>`);
       }
 
       if (entry.changeFrequency) {
@@ -43,8 +42,9 @@ export function sitemapIndexToXml(entries: SitemapIndexEntry[]): string {
     .map((entry) => {
       const lines = [`    <loc>${escapeXml(entry.loc)}</loc>`];
 
-      if (entry.lastModified) {
-        lines.push(`    <lastmod>${entry.lastModified.toISOString()}</lastmod>`);
+      if (entry.lastModified != null) {
+        const iso = sitemapDateToIso(parseValidSitemapDate(entry.lastModified));
+        if (iso) lines.push(`    <lastmod>${iso}</lastmod>`);
       }
 
       return `  <sitemap>\n${lines.join("\n")}\n  </sitemap>`;
