@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CityBreadcrumbs } from "@/components/city/CityBreadcrumbs";
 import { CityPageHero } from "@/components/city/CityPageHero";
 import { CityPageSeoContent } from "@/components/city/CityPageSeoContent";
 import { CityPaginatedRestaurants } from "@/components/city/CityPaginatedRestaurants";
+import { CityHubSchema } from "@/components/seo/CityHubSchema";
 import {
   cityDisplayName,
   cityHubPath,
@@ -121,14 +123,25 @@ export default async function CityHubPage({ params, searchParams }: PageProps) {
     areaCounts: seoStats.areaCounts,
   });
 
+  const pageUrl = cityHubPageCanonical(getApexOrigin(), path, page);
+
   return (
     <div className="bg-gradient-to-b from-halal-50/30 via-zinc-50 to-zinc-50">
+      <CityHubSchema
+        cityName={cityName}
+        citySlug={canonical}
+        pageUrl={pageUrl}
+        restaurants={listResult.restaurants}
+        page={page}
+        total={total}
+      />
       <CityPageHero cityName={cityName} citySlug={canonical} total={total} />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <CityBreadcrumbs cityName={cityName} />
         <Link
           href="/city"
-          className="text-sm font-semibold text-halal-700 transition hover:text-halal-900"
+          className="mt-4 inline-block text-sm font-semibold text-halal-700 transition hover:text-halal-900"
         >
           ← All cities
         </Link>
