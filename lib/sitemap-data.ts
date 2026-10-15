@@ -6,7 +6,10 @@ import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 import { isSubdomainSafeSlug } from "@/lib/subdomain-slug";
 import { getSupabaseServer } from "@/lib/supabase";
-import { getSiteUrl, restaurantSubdomainUrl } from "@/lib/utils";
+import { getApexOrigin } from "@/lib/apex-origin";
+import { restaurantSubdomainUrl } from "@/lib/utils";
+
+export { getApexOrigin };
 
 const PAGE_SIZE = 1000;
 
@@ -35,17 +38,6 @@ export type SitemapIndexEntry = {
   loc: string;
   lastModified?: Date;
 };
-
-/** Production apex origin, e.g. https://halalresmenu.com */
-export function getApexOrigin(): string {
-  const base = getSiteUrl();
-  try {
-    const u = new URL(base.includes("://") ? base : `https://${base}`);
-    return u.origin;
-  } catch {
-    return "https://halalresmenu.com";
-  }
-}
 
 function rowFromSitemapRecord(row: Record<string, unknown>): RestaurantSitemapRow | null {
   const slug = String(row.slug ?? "").trim();

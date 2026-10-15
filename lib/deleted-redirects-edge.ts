@@ -1,4 +1,4 @@
-import { getApexOrigin } from "@/lib/sitemap-data";
+import { getApexOrigin } from "@/lib/apex-origin";
 
 let map: Map<string, string> | null = null;
 let loadPromise: Promise<Map<string, string>> | null = null;

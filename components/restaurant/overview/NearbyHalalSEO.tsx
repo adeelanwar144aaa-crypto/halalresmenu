@@ -47,7 +47,7 @@ async function NearbyHalalSEOContent({
         .select("slug,name,cuisine_type,latitude,longitude")
         .eq("city", restaurant.city)
         .neq("id", restaurant.id)
-        .limit(20);
+        .limit(12);
       rows = ((cityRows ?? []) as Neighbor[]).map((r) => ({
         ...r,
         km:
@@ -67,7 +67,7 @@ async function NearbyHalalSEOContent({
         .neq("id", restaurant.id)
         .not("latitude", "is", null)
         .not("longitude", "is", null)
-        .limit(30);
+        .limit(12);
       const list = (data ?? []) as Neighbor[];
       const seen = new Set(rows.map((r) => r.slug));
       const byDistance = list

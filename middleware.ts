@@ -6,10 +6,8 @@ import {
   isApexHost,
   normalizeSlug,
 } from "@/lib/host-routing";
-import {
-  getDeadSubdomainRedirect,
-  getLegacyApexRedirect,
-} from "@/lib/legacy-redirects";
+import { getDeadSubdomainRedirect } from "@/lib/dead-subdomain-redirects";
+import { getLegacyApexRedirect } from "@/lib/legacy-apex-path-redirects";
 import {
   isRestaurantPathname,
   parseRestaurantPath,
@@ -18,7 +16,7 @@ import {
   setSecurityAndSeoHeaders,
   wwwApexRedirectUrl,
 } from "@/lib/response-headers";
-import { getApexOrigin } from "@/lib/sitemap-data";
+import { getApexOrigin } from "@/lib/apex-origin";
 import {
   isHalalInfoRequestPath,
   restaurantHalalInfoOverviewUrl,

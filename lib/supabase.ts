@@ -115,6 +115,7 @@ async function fetchRowBySlug(
       .maybeSingle();
     if (error) {
       throwIfSupabaseUnavailable(error, label);
+      console.error(`[${label}]`, error.message);
       return null;
     }
     if (!data) return null;
