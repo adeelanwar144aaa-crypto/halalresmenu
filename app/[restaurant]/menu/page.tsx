@@ -11,20 +11,20 @@ import { parseMenuImagesForRestaurant } from "@/lib/menu-images";
 import { createPageMetadata } from "@/components/seo/MetaTags";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { hasMenuData, parseMenuData } from "@/lib/menu-data";
-import { fetchRestaurantBySlug } from "@/lib/supabase";
+import { fetchRestaurantMenuBySlug } from "@/lib/supabase";
 import { restaurantCanonicalUrl } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 type PageProps = { params: Promise<{ restaurant: string }> };
 
 /** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { restaurant } = await params;
-  const row = await fetchRestaurantBySlug(restaurant);
+  const row = await fetchRestaurantMenuBySlug(restaurant);
   if (!row) {
     return createPageMetadata({ pageType: "menu", slug: restaurant });
   }
@@ -38,7 +38,7 @@ export async function generateMetadata({
 
 export default async function RestaurantMenuPage({ params }: PageProps) {
   const { restaurant } = await params;
-  const row = await fetchRestaurantBySlug(restaurant);
+  const row = await fetchRestaurantMenuBySlug(restaurant);
   if (!row) notFound();
 
   const menuData = parseMenuData(row.menu_data);

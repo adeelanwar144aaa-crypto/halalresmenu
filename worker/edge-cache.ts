@@ -2,6 +2,7 @@ import {
   CACHE_TTL,
   cacheControlHeader,
   isSitemapPathname,
+  restaurantPageCacheControlHeader,
 } from "../lib/cache-config";
 import { maintenance503Response } from "../lib/maintenance-response";
 import { SUPABASE_UNAVAILABLE_HEADER } from "../lib/supabase-unavailable";
@@ -164,7 +165,19 @@ export async function fetchWithEdgeCache(
 
   const body = await response.arrayBuffer();
   const headers = new Headers(response.headers);
-  headers.set("Cache-Control", cacheControlHeader(ttl));
+  const hostname =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    new URL(request.url).hostname;
+  const isRestaurantHost = Boolean(
+    extractRestaurantSubdomain(hostnameOnly(hostname), rootDomain)
+  );
+  headers.set(
+    "Cache-Control",
+    isRestaurantHost && ttl === CACHE_TTL.RESTAURANT
+      ? restaurantPageCacheControlHeader()
+      : cacheControlHeader(ttl)
+  );
   headers.delete(SUPABASE_UNAVAILABLE_HEADER);
 
   const fresh = new Response(body, {

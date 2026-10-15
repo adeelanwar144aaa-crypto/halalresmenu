@@ -2,6 +2,11 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import type { Restaurant } from "@/types/restaurant";
 import type { RestaurantPhoto, Review } from "@/types/restaurant";
+import {
+  RESTAURANT_CHROME_COLUMNS,
+  RESTAURANT_MENU_COLUMNS,
+  RESTAURANT_OVERVIEW_COLUMNS,
+} from "@/lib/restaurant-columns";
 import { throwIfSupabaseUnavailable } from "@/lib/supabase-errors";
 import { SupabaseUnavailableError } from "@/lib/supabase-unavailable";
 
@@ -95,34 +100,89 @@ export function getSupabaseServer(): SupabaseClient | null {
   return serverClient;
 }
 
-async function fetchRestaurantBySlugImpl(
-  slug: string
+async function fetchRowBySlug(
+  slug: string,
+  columns: string,
+  label: string
 ): Promise<Restaurant | null> {
   const supabase = getSupabaseServer();
   if (!supabase) throw new SupabaseUnavailableError();
   try {
     const { data, error } = await supabase
       .from("restaurants")
-      .select(
-        "*, menu_data, seo_content, photos, reviews, opening_hours, nearby_mosques"
-      )
+      .select(columns)
       .eq("slug", slug)
       .maybeSingle();
     if (error) {
-      throwIfSupabaseUnavailable(error, "fetchRestaurantBySlug");
+      throwIfSupabaseUnavailable(error, label);
       return null;
     }
     if (!data) return null;
-    return data as Restaurant;
+    return data as unknown as Restaurant;
   } catch (err) {
     if (err instanceof SupabaseUnavailableError) throw err;
-    throwIfSupabaseUnavailable(err, "fetchRestaurantBySlug");
+    throwIfSupabaseUnavailable(err, label);
     return null;
   }
 }
 
-/** Deduped per request — layout, metadata, and page share one round trip. */
+async function fetchRestaurantBySlugImpl(
+  slug: string
+): Promise<Restaurant | null> {
+  return fetchRowBySlug(
+    slug,
+    RESTAURANT_OVERVIEW_COLUMNS,
+    "fetchRestaurantBySlug"
+  );
+}
+
+/** Overview + metadata — explicit columns (no about_raw / select *). */
 export const fetchRestaurantBySlug = cache(fetchRestaurantBySlugImpl);
+
+async function fetchRestaurantMenuBySlugImpl(
+  slug: string
+): Promise<Restaurant | null> {
+  return fetchRowBySlug(slug, RESTAURANT_MENU_COLUMNS, "fetchRestaurantMenuBySlug");
+}
+
+export const fetchRestaurantMenuBySlug = cache(fetchRestaurantMenuBySlugImpl);
+
+export type RestaurantChromeRow = Pick<
+  Restaurant,
+  | "slug"
+  | "name"
+  | "cuisine_type"
+  | "primary_color"
+  | "background_color"
+  | "accent_color"
+>;
+
+async function fetchRestaurantChromeBySlugImpl(
+  slug: string
+): Promise<RestaurantChromeRow | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) throw new SupabaseUnavailableError();
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select(RESTAURANT_CHROME_COLUMNS)
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) {
+      throwIfSupabaseUnavailable(error, "fetchRestaurantChromeBySlug");
+      return null;
+    }
+    if (!data) return null;
+    return data as unknown as RestaurantChromeRow;
+  } catch (err) {
+    if (err instanceof SupabaseUnavailableError) throw err;
+    throwIfSupabaseUnavailable(err, "fetchRestaurantChromeBySlug");
+    return null;
+  }
+}
+
+/** Nav title + theme tokens only (root layout + restaurant layout). */
+export const fetchRestaurantChromeBySlug = cache(fetchRestaurantChromeBySlugImpl);
 
 async function fetchRestaurantCityBySlugImpl(
   slug: string

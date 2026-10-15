@@ -30,6 +30,7 @@ import {
   firstRestaurantPhotoUrl,
   resolveRestaurantGalleryUrls,
 } from "@/lib/restaurant-photos";
+import { parseGoogleReviewsJson } from "@/lib/google-reviews";
 import { getMenuSchemaSample, parseMenuData } from "@/lib/menu-data";
 import {
   fetchRestaurantBySlug,
@@ -42,7 +43,7 @@ import { notFound } from "next/navigation";
 type PageProps = { params: Promise<{ restaurant: string }> };
 
 /** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
@@ -77,10 +78,14 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
 
   const restaurantName = row.name?.trim() || "Restaurant";
 
-  const [photos, reviews] = await Promise.all([
+  const embeddedReviews = parseGoogleReviewsJson(row.reviews);
+  const [photos, tableReviews] = await Promise.all([
     fetchRestaurantPhotos(row.id),
-    fetchRestaurantReviews(row.id),
+    embeddedReviews.length > 0
+      ? Promise.resolve([])
+      : fetchRestaurantReviews(row.id),
   ]);
+  const reviews = embeddedReviews.length > 0 ? [] : tableReviews;
 
   const menuData = parseMenuData(row.menu_data);
 

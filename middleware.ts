@@ -8,11 +8,8 @@ import {
 } from "@/lib/host-routing";
 import {
   getDeadSubdomainRedirect,
-  getDeadSubdomainRedirectAsync,
   getLegacyApexRedirect,
-  restaurantCityHubUrl,
 } from "@/lib/legacy-redirects";
-import { maintenance503Response } from "@/lib/maintenance-response";
 import {
   isRestaurantPathname,
   parseRestaurantPath,
@@ -22,10 +19,6 @@ import {
   wwwApexRedirectUrl,
 } from "@/lib/response-headers";
 import { getApexOrigin } from "@/lib/sitemap-data";
-import {
-  checkRestaurantSlugViaRest,
-  fetchRestaurantCityViaRest,
-} from "@/lib/supabase-rest-edge";
 import {
   isHalalInfoRequestPath,
   restaurantHalalInfoOverviewUrl,
@@ -106,9 +99,6 @@ function forwardWithPathname(
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const host = requestHost(request);
-  const apexOrigin = isApexHost(host)
-    ? `${request.nextUrl.protocol}//${hostnameOnly(host)}`
-    : "https://halalresmenu.com";
   const pathNorm = pathname.replace(/\/$/, "") || "/";
 
   const wwwTarget = wwwApexRedirectUrl(
@@ -161,6 +151,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (slug) {
+    const dead = getDeadSubdomainRedirect(slug);
+    if (dead) {
+      return finalizeResponse(request, redirect301(dead));
+    }
+
     if (pathNorm === "/-Home") {
       return finalizeResponse(
         request,
@@ -169,29 +164,9 @@ export async function middleware(request: NextRequest) {
     }
 
     if (pathNorm === "/city-Cities") {
-      const city = await fetchRestaurantCityViaRest(slug);
-      const target = city
-        ? restaurantCityHubUrl(city)
-        : `${getApexOrigin()}/city`;
-      return finalizeResponse(request, redirect301(target));
-    }
-
-    const slugResult = await checkRestaurantSlugViaRest(slug);
-    if (slugResult === "unavailable") {
-      return maintenance503Response();
-    }
-    if (slugResult === "missing") {
-      const deadRedirect =
-        getDeadSubdomainRedirect(slug) ??
-        (await getDeadSubdomainRedirectAsync(slug, apexOrigin));
-      if (deadRedirect) {
-        return redirect301(deadRedirect);
-      }
       return finalizeResponse(
         request,
-        forwardWithPathname(request, "/invalid-subdomain", {
-          rewrite: new URL("/invalid-subdomain", request.url),
-        })
+        redirect301(`${getApexOrigin()}/city`)
       );
     }
 
@@ -227,20 +202,14 @@ export async function middleware(request: NextRequest) {
             redirect301(restaurantHalalInfoOverviewUrl(parsed.slug))
           );
         }
-        const slugResult = await checkRestaurantSlugViaRest(parsed.slug);
-        if (slugResult === "exists") {
-          return finalizeResponse(
-            request,
-            redirect301(restaurantSubdomainUrl(parsed.slug, parsed.suffix))
-          );
+        const dead = getDeadSubdomainRedirect(parsed.slug);
+        if (dead) {
+          return finalizeResponse(request, redirect301(dead));
         }
-
-        const deadRedirect =
-          getDeadSubdomainRedirect(parsed.slug) ??
-          (await getDeadSubdomainRedirectAsync(parsed.slug, apexOrigin));
-        if (deadRedirect) {
-          return finalizeResponse(request, redirect301(deadRedirect));
-        }
+        return finalizeResponse(
+          request,
+          redirect301(restaurantSubdomainUrl(parsed.slug, parsed.suffix))
+        );
       }
     }
   }

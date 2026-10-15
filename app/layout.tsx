@@ -11,7 +11,7 @@ import {
   themeToCssProperties,
 } from "@/lib/restaurant-theme";
 import { shouldLoadAdSense } from "@/lib/adsense";
-import { fetchRestaurantBySlug } from "@/lib/supabase";
+import { fetchRestaurantChromeBySlug } from "@/lib/supabase";
 import "./globals.css";
 
 const GA_ID = "G-LMCL7BMSJR";
@@ -68,7 +68,7 @@ export default async function RootLayout({
   let isRestaurantTheme = false;
 
   if (restaurantSlug) {
-    const restaurant = await fetchRestaurantBySlug(restaurantSlug);
+    const restaurant = await fetchRestaurantChromeBySlug(restaurantSlug);
     if (restaurant) {
       isRestaurantTheme = true;
       themeStyle = themeToCssProperties(

@@ -2,11 +2,11 @@ export const runtime = "edge";
 
 import { headers } from "next/headers";
 import { RestaurantNavigation } from "@/components/layout/RestaurantNavigation";
-import { fetchRestaurantBySlug } from "@/lib/supabase";
+import { fetchRestaurantChromeBySlug } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 
 /** Keep in sync with `CACHE_TTL.RESTAURANT` in lib/cache-config.ts */
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export default async function RestaurantLayout({
   children,
@@ -16,7 +16,7 @@ export default async function RestaurantLayout({
   params: Promise<{ restaurant: string }>;
 }) {
   const { restaurant } = await params;
-  const row = await fetchRestaurantBySlug(restaurant);
+  const row = await fetchRestaurantChromeBySlug(restaurant);
   if (!row) notFound();
 
   const hdrs = await headers();
