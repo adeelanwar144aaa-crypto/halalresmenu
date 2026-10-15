@@ -62,7 +62,6 @@ export const RESTAURANT_MENU_COLUMNS = [
   "latitude",
   "longitude",
   "phone",
-  "email",
   "website",
   "halal_status",
   "halal_certifier",

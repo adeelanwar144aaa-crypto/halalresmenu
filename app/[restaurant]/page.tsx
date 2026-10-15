@@ -28,6 +28,7 @@ import { isRestaurantOpenNow } from "@/lib/opening-hours";
 import { resolveRestaurantReviewSummary } from "@/lib/google-reviews";
 import {
   firstRestaurantPhotoUrl,
+  parseRestaurantPhotosJson,
   resolveRestaurantGalleryUrls,
 } from "@/lib/restaurant-photos";
 import { parseGoogleReviewsJson } from "@/lib/google-reviews";
@@ -54,7 +55,11 @@ export async function generateMetadata({
     return createPageMetadata({ pageType: "overview", slug: restaurant });
   }
 
-  const tablePhotos = await fetchRestaurantPhotos(row.id);
+  const jsonPhotoCountMeta = parseRestaurantPhotosJson(row.photos).length;
+  const tablePhotos =
+    jsonPhotoCountMeta >= 1
+      ? []
+      : await fetchRestaurantPhotos(row.id);
   const ogImage = firstRestaurantPhotoUrl(row.photos, tablePhotos);
 
   return createPageMetadata({
@@ -79,8 +84,11 @@ export default async function RestaurantOverviewPage({ params }: PageProps) {
   const restaurantName = row.name?.trim() || "Restaurant";
 
   const embeddedReviews = parseGoogleReviewsJson(row.reviews);
+  const jsonPhotoCount = parseRestaurantPhotosJson(row.photos).length;
   const [photos, tableReviews] = await Promise.all([
-    fetchRestaurantPhotos(row.id),
+    jsonPhotoCount >= 3
+      ? Promise.resolve([])
+      : fetchRestaurantPhotos(row.id),
     embeddedReviews.length > 0
       ? Promise.resolve([])
       : fetchRestaurantReviews(row.id),
