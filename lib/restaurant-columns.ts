@@ -1,13 +1,13 @@
 /** Supabase `select` lists — avoid `*` and large columns not needed per route. */
 
 export const RESTAURANT_CHROME_COLUMNS =
-  "slug,name,cuisine_type,primary_color,background_color,accent_color";
+  "slug,name,cuisine_type";
 
+/** Columns verified against production REST API (no unknown DB fields). */
 export const RESTAURANT_OVERVIEW_COLUMNS = [
   "id",
   "slug",
   "name",
-  "description",
   "country",
   "city",
   "address",
@@ -15,7 +15,6 @@ export const RESTAURANT_OVERVIEW_COLUMNS = [
   "latitude",
   "longitude",
   "phone",
-  "email",
   "website",
   "halal_status",
   "halal_certifier",
@@ -53,11 +52,6 @@ export const RESTAURANT_OVERVIEW_COLUMNS = [
   "total_reviews",
   "about_content",
   "seo_content",
-  "seo_title",
-  "meta_title",
-  "seo_meta_description",
-  "meta_description",
-  "content_generated_at",
   "updated_at",
   "images_uploaded_at",
 ].join(",");
