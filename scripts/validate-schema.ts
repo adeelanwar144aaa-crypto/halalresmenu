@@ -71,7 +71,7 @@ async function fetchAllRestaurants(): Promise<Restaurant[]> {
 }
 
 function countVirtualPages(restaurant: Restaurant): number {
-  let n = 2; // overview + halal-info
+  let n = 1; // overview
   if (parseMenuData(restaurant.menu_data)) n += 1;
   return n;
 }

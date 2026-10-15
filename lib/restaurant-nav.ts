@@ -10,11 +10,11 @@ export type RestaurantNavTarget =
 export const RESTAURANT_NAV_ITEMS: ReadonlyArray<{
   target: RestaurantNavTarget;
   label: string;
-  page: "overview" | "menu" | "halal-info" | "anchor";
+  page: "overview" | "menu" | "anchor";
 }> = [
   { target: "overview", label: "Overview", page: "overview" },
   { target: "menu", label: "Menu", page: "menu" },
-  { target: "halal-info", label: "Halal Info", page: "halal-info" },
+  { target: "halal-info", label: "Halal Info", page: "anchor" },
   { target: "reviews", label: "Reviews", page: "anchor" },
   { target: "prayer-times", label: "Prayer Times", page: "anchor" },
   { target: "nearby-mosques", label: "Nearby Mosques", page: "anchor" },
@@ -34,7 +34,7 @@ export function restaurantNavHref(
       case "menu":
         return "/menu";
       case "halal-info":
-        return "/halal-info";
+        return "/#halal-info";
       case "reviews":
         return "/#reviews";
       case "prayer-times":
@@ -53,7 +53,7 @@ export function restaurantNavHref(
     case "menu":
       return `${base}/menu`;
     case "halal-info":
-      return `${base}/halal-info`;
+      return `${base}#halal-info`;
     case "reviews":
       return `${base}#reviews`;
     case "prayer-times":
@@ -66,7 +66,7 @@ export function restaurantNavHref(
 }
 
 export function isRestaurantNavItemActive(
-  page: "overview" | "menu" | "halal-info" | "anchor",
+  page: "overview" | "menu" | "anchor",
   pathname: string,
   slug: string,
   onSubdomain: boolean
@@ -78,13 +78,11 @@ export function isRestaurantNavItemActive(
   if (onSubdomain) {
     if (page === "overview") return normalized === "/";
     if (page === "menu") return normalized === "/menu";
-    if (page === "halal-info") return normalized === "/halal-info";
     return false;
   }
 
   const base = `/${slug}`;
   if (page === "overview") return normalized === base;
   if (page === "menu") return normalized === `${base}/menu`;
-  if (page === "halal-info") return normalized === `${base}/halal-info`;
   return false;
 }

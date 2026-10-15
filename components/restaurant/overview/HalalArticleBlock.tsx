@@ -17,7 +17,7 @@ export function HalalArticleBlock({ restaurant }: { restaurant: Restaurant }) {
 
   return (
     <section
-      id="halal-information"
+      id="halal-info"
       className="scroll-mt-32 border-b border-zinc-100/80 bg-zinc-50/50 py-14 sm:scroll-mt-36 sm:py-20"
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

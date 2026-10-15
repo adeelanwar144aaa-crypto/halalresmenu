@@ -26,6 +26,11 @@ import {
   checkRestaurantSlugViaRest,
   fetchRestaurantCityViaRest,
 } from "@/lib/supabase-rest-edge";
+import {
+  isHalalInfoRequestPath,
+  restaurantHalalInfoOverviewUrl,
+  restaurantHalalInfoPathAnchor,
+} from "@/lib/restaurant-halal-info-redirect";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
 /**
@@ -148,6 +153,13 @@ export async function middleware(request: NextRequest) {
 
   const slug = resolveRestaurantSlug(request);
 
+  if (slug && pathNorm === "/halal-info") {
+    return finalizeResponse(
+      request,
+      redirect301(restaurantHalalInfoOverviewUrl(slug))
+    );
+  }
+
   if (slug) {
     if (pathNorm === "/-Home") {
       return finalizeResponse(
@@ -209,6 +221,12 @@ export async function middleware(request: NextRequest) {
     if (isRestaurantPathname(pathname)) {
       const parsed = parseRestaurantPath(pathname);
       if (parsed) {
+        if (parsed.suffix === "/halal-info") {
+          return finalizeResponse(
+            request,
+            redirect301(restaurantHalalInfoOverviewUrl(parsed.slug))
+          );
+        }
         const slugResult = await checkRestaurantSlugViaRest(parsed.slug);
         if (slugResult === "exists") {
           return finalizeResponse(
@@ -224,6 +242,18 @@ export async function middleware(request: NextRequest) {
           return finalizeResponse(request, redirect301(deadRedirect));
         }
       }
+    }
+  }
+
+  if (isHalalInfoRequestPath(pathname)) {
+    const parsed = parseRestaurantPath(pathname);
+    if (parsed?.suffix === "/halal-info") {
+      return finalizeResponse(
+        request,
+        redirect301(
+          restaurantHalalInfoPathAnchor(request.nextUrl.origin, parsed.slug)
+        )
+      );
     }
   }
 

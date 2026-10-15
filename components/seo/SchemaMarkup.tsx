@@ -376,7 +376,7 @@ export function buildRestaurantSchemaGraph({
   description = null,
 }: {
   restaurant: Restaurant;
-  /** Canonical restaurant overview URL (stable @id across overview, menu, halal-info). */
+  /** Canonical restaurant overview URL (stable @id across overview and menu). */
   url: string;
   reviews?: Review[];
   menuSample?: MenuDataItem[];

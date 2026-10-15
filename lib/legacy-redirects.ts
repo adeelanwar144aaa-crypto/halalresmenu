@@ -13,9 +13,9 @@ const LEGACY_APEX_PATH_REDIRECTS: Record<string, string> = {
   "/-Home": "/",
   "/city/stoke-on-trent": "/city/stoke",
   "/city/stoke-on-trent/all": "/city/stoke/all",
-  "/bengal-spice-southampton/halal-info": restaurantSubdomainUrl(
+  "/bengal-spice-southampton/halal-info": `${restaurantSubdomainUrl(
     "bengal-spice-portsmouth"
-  ),
+  )}#halal-info`,
 };
 
 /** 301 targets for removed restaurant subdomains (slug no longer in database). */

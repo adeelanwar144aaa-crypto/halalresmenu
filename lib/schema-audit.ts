@@ -19,7 +19,7 @@ export type SchemaIssue = {
   severity: SchemaIssueSeverity;
 };
 
-export type RestaurantPageKind = "overview" | "menu" | "halal-info";
+export type RestaurantPageKind = "overview" | "menu";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_HM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -312,7 +312,7 @@ export function buildSchemaForRestaurantPage(
 
 export function auditRestaurantRow(
   restaurant: Restaurant,
-  pages: RestaurantPageKind[] = ["overview", "menu", "halal-info"]
+  pages: RestaurantPageKind[] = ["overview", "menu"]
 ): SchemaIssue[] {
   const url = restaurantSubdomainUrl(restaurant.slug);
   const menuData = parseMenuData(restaurant.menu_data);

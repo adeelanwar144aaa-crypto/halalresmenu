@@ -18,7 +18,7 @@ HalalResMenu lists 6,000+ halal restaurants across the UK with verified halal st
 - Main site: https://halalresmenu.com
 - Restaurant page: https://[restaurant-slug].halalresmenu.com
 - Menu page: https://[restaurant-slug].halalresmenu.com/menu
-- Halal info: https://[restaurant-slug].halalresmenu.com/halal-info
+- Halal info (overview section): https://[restaurant-slug].halalresmenu.com/#halal-info
 
 ## Coverage
 United Kingdom — 58 cities including London, Birmingham, Manchester, Leeds, Bradford, Leicester

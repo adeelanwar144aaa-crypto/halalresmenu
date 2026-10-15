@@ -360,7 +360,7 @@ export function buildMainSiteSitemapEntries(
   ];
 }
 
-/** Pages for a single restaurant subdomain (overview, menu, halal-info). */
+/** Pages for a single restaurant subdomain (overview, menu). */
 export function buildRestaurantSitemapEntries(
   restaurant: RestaurantSitemapRow
 ): MetadataRoute.Sitemap {
@@ -380,12 +380,6 @@ export function buildRestaurantSitemapEntries(
       ...mod,
       changeFrequency: "weekly",
       priority: 0.8,
-    },
-    {
-      url: restaurantSubdomainUrl(restaurant.slug, "/halal-info"),
-      ...mod,
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
   ];
 }

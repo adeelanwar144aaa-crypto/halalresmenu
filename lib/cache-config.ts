@@ -2,7 +2,7 @@
 export const CACHE_TTL = {
   /** Homepage, /city/, /city/[slug]/, /city/[slug]/all/ */
   HOME_AND_CITY: 3600,
-  /** Restaurant subdomain pages (overview, menu, halal-info) */
+  /** Restaurant subdomain pages (overview, menu) */
   RESTAURANT: 1800,
   /** Sitemap XML route handlers */
   SITEMAP: 3600,

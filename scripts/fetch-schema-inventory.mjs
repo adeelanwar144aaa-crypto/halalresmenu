@@ -4,7 +4,6 @@ const urls = [
   ["city-cuisine-hub", "https://halalresmenu.com/city/london/pakistani"],
   ["restaurant-overview", "https://7-spices.halalresmenu.com/"],
   ["restaurant-menu", "https://7-spices.halalresmenu.com/menu"],
-  ["restaurant-halal-info", "https://7-spices.halalresmenu.com/halal-info"],
   ["restaurant-photos", "https://7-spices.halalresmenu.com/photos"],
   ["about", "https://halalresmenu.com/about"],
   ["contact", "https://halalresmenu.com/contact"],

@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 
 export const runtime = "edge";
 import { headers } from "next/headers";
+import Script from "next/script";
 import { DeferredMonetization } from "@/components/analytics/DeferredMonetization";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import {
@@ -12,6 +13,8 @@ import {
 import { shouldLoadAdSense } from "@/lib/adsense";
 import { fetchRestaurantBySlug } from "@/lib/supabase";
 import "./globals.css";
+
+const GA_ID = "G-LMCL7BMSJR";
 
 export const metadata: Metadata = {
   title: {
@@ -82,6 +85,18 @@ export default async function RootLayout({
     >
       <body className="min-h-screen font-sans antialiased">
         <SiteChrome>{children}</SiteChrome>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
         <DeferredMonetization loadAdSense={loadAdSense} />
       </body>
     </html>

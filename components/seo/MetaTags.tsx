@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { extractRestaurantArea } from "@/lib/restaurant-area";
 import { restaurantSubdomainUrl } from "@/lib/utils";
 
-export type RestaurantPageType = "overview" | "menu" | "halal-info";
+export type RestaurantPageType = "overview" | "menu";
 
 export type PageMetaInput = {
   pageType: RestaurantPageType;
@@ -120,8 +120,6 @@ function canonicalUrlForPage(slug: string, pageType: RestaurantPageType): string
   switch (pageType) {
     case "menu":
       return restaurantSubdomainUrl(slug, "/menu");
-    case "halal-info":
-      return restaurantSubdomainUrl(slug, "/halal-info");
     case "overview":
     default:
       return restaurantSubdomainUrl(slug);
@@ -180,26 +178,6 @@ function buildTitleAndDescription(input: PageMetaInput): {
         title: "Restaurant Menu With Prices Updated 2026",
         description:
           "Browse the full halal menu with updated 2026 prices on HalalResMenu.",
-      };
-
-    case "halal-info":
-      if (name && city) {
-        return {
-          title: `${name} | Halal Information | Updated 2026`,
-          description: `View halal certification, facilities, and policies for ${name} in ${city}. Updated halal status and dining details for 2026.`,
-        };
-      }
-      if (name) {
-        return {
-          title: `${name} | Halal Information | Updated 2026`,
-          description:
-            "View halal certification, facilities and policies for this restaurant on HalalResMenu.",
-        };
-      }
-      return {
-        title: "Restaurant | Halal Information | Updated 2026 | HalalResMenu",
-        description:
-          "View halal certification, facilities and policies for this restaurant on HalalResMenu.",
       };
   }
 }
