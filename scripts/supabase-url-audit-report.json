@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-10-16T22:44:09.837Z",
+  "storage": {
+    "listBucketsApi": [],
+    "note": "listBuckets returned []. Probed common bucket names directly.",
+    "bucketDetails": [
+      {
+        "bucket": "restaurant-photos",
+        "fileCount": 0,
+        "totalBytes": 0,
+        "totalPretty": "0 B (or sizes not in list metadata)",
+        "public": null
+      },
+      {
+        "bucket": "restaurant-menus",
+        "fileCount": 0,
+        "totalBytes": 0,
+        "totalPretty": "0 B (or sizes not in list metadata)",
+        "public": null
+      },
+      {
+        "bucket": "menus",
+        "fileCount": 0,
+        "totalBytes": 0,
+        "totalPretty": "0 B (or sizes not in list metadata)",
+        "public": null
+      },
+      {
+        "bucket": "photos",
+        "fileCount": 0,
+        "totalBytes": 0,
+        "totalPretty": "0 B (or sizes not in list metadata)",
+        "public": null
+      }
+    ]
+  },
+  "restaurants": {
+    "totalRestaurantsScanned": 1793,
+    "restaurantsWithAnySupabaseUrl": 0,
+    "hitsByTopLevelColumn": {},
+    "hitsByJsonPath": {},
+    "examples": []
+  }
+}

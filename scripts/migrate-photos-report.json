@@ -1,0 +1,526 @@
+{
+  "startedAt": "2026-10-16T22:24:31.368Z",
+  "dryRun": false,
+  "moved": [
+    {
+      "slug": "capitanos-pizza",
+      "photos": 3
+    },
+    {
+      "slug": "mughali-taste",
+      "photos": 3
+    },
+    {
+      "slug": "lahori-milton-keynes",
+      "photos": 3
+    },
+    {
+      "slug": "amani",
+      "photos": 3
+    },
+    {
+      "slug": "al-jazeera-restaurant",
+      "photos": 3
+    },
+    {
+      "slug": "al-uruba-cafe",
+      "photos": 3
+    },
+    {
+      "slug": "molana",
+      "photos": 3
+    },
+    {
+      "slug": "khau-galli",
+      "photos": 3
+    },
+    {
+      "slug": "balti-nights-luton",
+      "photos": 3
+    },
+    {
+      "slug": "asha-s",
+      "photos": 3
+    },
+    {
+      "slug": "little-lahore",
+      "photos": 3
+    },
+    {
+      "slug": "maoz",
+      "photos": 3
+    },
+    {
+      "slug": "cowplain-kebab-house",
+      "photos": 3
+    },
+    {
+      "slug": "mohsen",
+      "photos": 3
+    },
+    {
+      "slug": "mashwi",
+      "photos": 3
+    },
+    {
+      "slug": "apna-pizza-bar",
+      "photos": 3
+    },
+    {
+      "slug": "lotus-plant-based",
+      "photos": 3
+    },
+    {
+      "slug": "mess-cafe",
+      "photos": 3
+    },
+    {
+      "slug": "mezze-bar-and-grill",
+      "photos": 3
+    },
+    {
+      "slug": "acha-halal-chinese-takeaway",
+      "photos": 3
+    },
+    {
+      "slug": "laziza-biryani-by-laziza-hut",
+      "photos": 3
+    },
+    {
+      "slug": "ayas-restaurant",
+      "photos": 3
+    },
+    {
+      "slug": "masala-zone",
+      "photos": 3
+    },
+    {
+      "slug": "last-monsoon",
+      "photos": 3
+    },
+    {
+      "slug": "kfc-peterborough",
+      "photos": 3
+    },
+    {
+      "slug": "mcdonald-s-manchester-2",
+      "photos": 3
+    },
+    {
+      "slug": "lahori-butt-karahi",
+      "photos": 3
+    },
+    {
+      "slug": "golden-gate",
+      "photos": 3
+    },
+    {
+      "slug": "jodpur-lounge",
+      "photos": 3
+    },
+    {
+      "slug": "bayleaf",
+      "photos": 3
+    },
+    {
+      "slug": "la-fiesta-leeds",
+      "photos": 3
+    },
+    {
+      "slug": "corners",
+      "photos": 3
+    },
+    {
+      "slug": "momo-station",
+      "photos": 3
+    },
+    {
+      "slug": "bella-italian",
+      "photos": 3
+    },
+    {
+      "slug": "lebanese-garden",
+      "photos": 3
+    },
+    {
+      "slug": "aspendos-chicken-pizza",
+      "photos": 3
+    },
+    {
+      "slug": "mr-india",
+      "photos": 3
+    },
+    {
+      "slug": "kaya-malaysian-restaurant",
+      "photos": 3
+    },
+    {
+      "slug": "babylon-manchester-2",
+      "photos": 3
+    },
+    {
+      "slug": "grill-flavas",
+      "photos": 3
+    },
+    {
+      "slug": "cinnamon-hounslow",
+      "photos": 3
+    },
+    {
+      "slug": "karahi-king-village",
+      "photos": 3
+    },
+    {
+      "slug": "chickaro-s",
+      "photos": 3
+    },
+    {
+      "slug": "jamaya-birmingham",
+      "photos": 3
+    },
+    {
+      "slug": "howdy-manchester-2",
+      "photos": 3
+    },
+    {
+      "slug": "happy-lamb-hot-pot-birmingham",
+      "photos": 3
+    },
+    {
+      "slug": "al-arabi-grillhouse-express",
+      "photos": 3
+    },
+    {
+      "slug": "kebabist",
+      "photos": 3
+    },
+    {
+      "slug": "anatolia",
+      "photos": 3
+    },
+    {
+      "slug": "jim-s-falafel",
+      "photos": 3
+    },
+    {
+      "slug": "moonlight",
+      "photos": 3
+    },
+    {
+      "slug": "al-madina-hyde",
+      "photos": 3
+    },
+    {
+      "slug": "favourable-fried-chicken",
+      "photos": 3
+    },
+    {
+      "slug": "anatolian-grill",
+      "photos": 3
+    },
+    {
+      "slug": "mem-saab",
+      "photos": 3
+    },
+    {
+      "slug": "golden-chippy",
+      "photos": 3
+    },
+    {
+      "slug": "shalinoar",
+      "photos": 3
+    },
+    {
+      "slug": "madhu-s",
+      "photos": 3
+    },
+    {
+      "slug": "kismet-manchester",
+      "photos": 3
+    },
+    {
+      "slug": "chicago-s-pizza",
+      "photos": 3
+    },
+    {
+      "slug": "marstons-chicken-shop",
+      "photos": 3
+    },
+    {
+      "slug": "the-banana-leaf",
+      "photos": 3
+    },
+    {
+      "slug": "almahmud-restaurant",
+      "photos": 3
+    },
+    {
+      "slug": "jai-durga-mahal",
+      "photos": 3
+    },
+    {
+      "slug": "laroash",
+      "photos": 3
+    },
+    {
+      "slug": "maroush-bakehouse",
+      "photos": 3
+    },
+    {
+      "slug": "auntie-anne-s",
+      "photos": 3
+    },
+    {
+      "slug": "ghost-burgers",
+      "photos": 3
+    },
+    {
+      "slug": "aroma-harrow",
+      "photos": 3
+    },
+    {
+      "slug": "ashi-s",
+      "photos": 3
+    },
+    {
+      "slug": "indico",
+      "photos": 3
+    },
+    {
+      "slug": "akbar",
+      "photos": 3
+    },
+    {
+      "slug": "ali-s-cuisine",
+      "photos": 3
+    },
+    {
+      "slug": "alkhaleej-arabic-restaurant",
+      "photos": 3
+    },
+    {
+      "slug": "chicago-pizza-and-posh-nosh",
+      "photos": 3
+    },
+    {
+      "slug": "the-chicken-shop",
+      "photos": 3
+    },
+    {
+      "slug": "cheetham-star",
+      "photos": 3
+    },
+    {
+      "slug": "a38-last-exit",
+      "photos": 3
+    },
+    {
+      "slug": "beirut-meza",
+      "photos": 3
+    },
+    {
+      "slug": "alanya-grill",
+      "photos": 3
+    },
+    {
+      "slug": "diyarbakir-sofrasi",
+      "photos": 3
+    },
+    {
+      "slug": "indian-affair-ancoats",
+      "photos": 3
+    },
+    {
+      "slug": "baburchi",
+      "photos": 3
+    },
+    {
+      "slug": "chennai-dosa",
+      "photos": 3
+    },
+    {
+      "slug": "monty-s-tandoori-takeaway",
+      "photos": 3
+    },
+    {
+      "slug": "mekan-croydon",
+      "photos": 3
+    },
+    {
+      "slug": "indian-rasoi",
+      "photos": 3
+    },
+    {
+      "slug": "favourite-charcoal-grill",
+      "photos": 3
+    },
+    {
+      "slug": "memories-of-india",
+      "photos": 3
+    },
+    {
+      "slug": "afghan-cuisine",
+      "photos": 3
+    },
+    {
+      "slug": "2020-world-buffet",
+      "photos": 1
+    },
+    {
+      "slug": "dave-s-hot-chicken",
+      "photos": 3
+    },
+    {
+      "slug": "little-istanbul-hounslow",
+      "photos": 3
+    },
+    {
+      "slug": "just-paratha",
+      "photos": 3
+    },
+    {
+      "slug": "mr-rooster",
+      "photos": 3
+    },
+    {
+      "slug": "bay-leaf-cardiff",
+      "photos": 3
+    },
+    {
+      "slug": "just-burgers-plus",
+      "photos": 3
+    },
+    {
+      "slug": "ceylone-1948-restaurant-operate-by-paris-cafe-limited",
+      "photos": 3
+    },
+    {
+      "slug": "grange-fried-chicken",
+      "photos": 3
+    },
+    {
+      "slug": "hungry-head",
+      "photos": 3
+    },
+    {
+      "slug": "merlin-tandoori",
+      "photos": 3
+    },
+    {
+      "slug": "evelyn-s",
+      "photos": 3
+    },
+    {
+      "slug": "arizona-fried-chicken",
+      "photos": 3
+    },
+    {
+      "slug": "eastern-spice-pizza-kebab-curry",
+      "photos": 3
+    },
+    {
+      "slug": "everest-spice-croydon",
+      "photos": 3
+    },
+    {
+      "slug": "etci-mehmet-turkish-steak-burger-house-birmingham",
+      "photos": 3
+    },
+    {
+      "slug": "marmaris-edinburgh-2",
+      "photos": 3
+    },
+    {
+      "slug": "kabul-kitchen",
+      "photos": 3
+    },
+    {
+      "slug": "khan-s-of-kensington",
+      "photos": 3
+    },
+    {
+      "slug": "deano-s-street-kitchen",
+      "photos": 3
+    },
+    {
+      "slug": "istanbul-kebab-leeds",
+      "photos": 3
+    },
+    {
+      "slug": "hibox",
+      "photos": 3
+    },
+    {
+      "slug": "mayyam-s",
+      "photos": 3
+    },
+    {
+      "slug": "lal-qela",
+      "photos": 3
+    },
+    {
+      "slug": "ambassador-s-clubhouse",
+      "photos": 3
+    },
+    {
+      "slug": "little-india",
+      "photos": 3
+    },
+    {
+      "slug": "balti-king",
+      "photos": 3
+    },
+    {
+      "slug": "cafe-istanbul",
+      "photos": 3
+    },
+    {
+      "slug": "bismillah-grill",
+      "photos": 3
+    },
+    {
+      "slug": "balti-nights",
+      "photos": 3
+    },
+    {
+      "slug": "lezzet",
+      "photos": 3
+    },
+    {
+      "slug": "chicken-cottage-slough",
+      "photos": 3
+    },
+    {
+      "slug": "delicious",
+      "photos": 3
+    },
+    {
+      "slug": "mississippi-fried-chiken",
+      "photos": 3
+    },
+    {
+      "slug": "empire",
+      "photos": 3
+    },
+    {
+      "slug": "german-doner-kebab-edinburgh",
+      "photos": 3
+    },
+    {
+      "slug": "agrabad",
+      "photos": 3
+    },
+    {
+      "slug": "everest-spice-bristol",
+      "photos": 3
+    }
+  ],
+  "failed": [],
+  "skippedRestaurants": 0,
+  "finishedAt": "2026-10-16T22:43:13.673Z",
+  "summary": {
+    "movedRestaurants": 128,
+    "failedEntries": 0,
+    "failedSlugs": 0
+  }
+}
